@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>dc.js - Pie Chart Example</title>
+    <meta charset="UTF-8">
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="css/dc.css"/>
+	<link rel="stylesheet" type="text/css" href="https://unpkg.com/dc@3/dc.css" />
+	<script src="https://unpkg.com/d3@5/dist/d3.js"></script>
+	<script src="https://unpkg.com/crossfilter2@1.4/crossfilter.js"></script>
+	<script src="https://unpkg.com/dc@3/dc.js"></script>
+	<script src="https://rawgit.com/crossfilter/reductio/master/reductio.js"></script>
+	<script src="https://npmcdn.com/universe@latest/universe.js"></script>
+	<style>
+	.dc-chart g {
+		fill: white;
+		font-size: 25px;
+	}
+
+	.dc-chart g.tick text {
+		fill: white;
+		font-size:20px;
+  }
+	</style>
+</head>
+
+
+<body style="background-color:#303030;color:white">
+		<h1>
+		<div class="row">
+			<div class="col" style="margin-left:1%">Downtime</div>
+			<div class="col text-right" style="margin-right:1%">XX/XX/XXXX</div>
+		</div>
+		</h1>
+		<hr style="border-color:white">
+	<div class="row">
+			<div class="col-md-6 border-right">
+
+				<div class="container" style="margin-top:5%;margin-bottom:5%">
+					<script type="text/javascript" src="header.js"></script>
+					<div style="margin-left:10%" id="downpie"></div>
+					<div style="margin-left:2%;margin-top:10%" id="downunscheduledbar"></div>
+				</div>
+			</div>
+
+			<div class="col-md-6">
+				<div class="container" style="margin-top:5%;margin-bottom:5%">
+				<div style="margin-left:10%">
+					<h2 style="font-size:50px">Downtime Value</h2>
+					<p style="margin-top:5%;font-size:35px">NTX1000		: XXXX</p>
+					<p style="font-size:35px">NTX1000		: XXXX</p>
+					<p style="font-size:35px">NTX1000		: XXXX</p>
+					<p style="font-size:35px">NTX1000		: XXXX</p>
+				</div>
+
+				<div style="margin-top:10%"></div>
+				<div style="margin-left:2%;margin-top:48.83px"id="downscheduledbar"></div>
+			</div>
+			</div>
+	</div>
+
+
+
+<script type="text/javascript" src="js/d3/d3.js"></script>
+<script type="text/javascript" src="js/crossfilter2/crossfilter.js"></script>
+<script type="text/javascript" src="js/dcjs/dc.js"></script>
+<script type="text/javascript">
+var downPie = dc.pieChart("#downpie");
+var unschdBarchart = dc.barChart("#downunscheduledbar");
+var schdBarchart = dc.barChart("#downscheduledbar");
+
+
+d3.csv("machinedown.csv").then(function(experiments) {
+
+  experiments.forEach(function(x) {
+        x.Speed = +x.Speed;
+      });
+
+  var pindx           = crossfilter(experiments),
+      pirunDimension  = pindx.dimension(function(d) {return "time-"+d.Run;})
+	  pispeedSumGroup = pirunDimension.group().reduceSum(function(d) {return d.Speed * d.Run;});
+
+	  unschdBarndx                 = crossfilter(experiments),
+      unschdBarrunDimension        = unschdBarndx.dimension(function(d) {return +d.Run;}),
+      unschdBarspeedSumGroup       = unschdBarrunDimension.group().reduceSum(function(d) {return d.Speed * d.Run / 1000;});
+
+  downPie
+	.colors(d3.scaleOrdinal().range(['#000000','#000033','#000066','#000099','#0000CC','#0000FF']))
+    .width(850)
+    .height(400)
+    .slicesCap(4)
+	.cx(200)
+    .innerRadius(100)
+    .dimension(pirunDimension)
+	.legend(dc.legend().x(600).y(20).itemHeight(25).gap(25))
+    .group(pispeedSumGroup)
+    // workaround for #703: not enough data is accessible through .label() to display percentages
+    .on('pretransition', function(downPie) {
+        downpie.selectAll('text.pie-slice').text(function(d) {
+            return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
+        })
+    });
+
+	unschdBarchart
+		.colors(d3.scaleOrdinal().range(['#0000FF']))
+		.width(900)
+        .height(400)
+		.gap(20)
+		.x(d3.scaleLinear().domain([6,20]))
+		<!--.x(d3.scaleBand()) <!--for single bar select
+		<!--.xUnits(dc.units.ordinal) <!-- for single bar select
+        .brushOn(false) <!-- allows time range select -->
+        .yAxisLabel("This is the Y Axis!")
+		.margins({top: 10, right: 20, bottom: 50, left: 30})
+        .xAxisLabel('Unscheduled Downtime')
+        .dimension(unschdBarrunDimension)
+        .group(unschdBarspeedSumGroup)
+		.controlsUseVisibility(true)
+		.renderlet(function (unschdBarchart) {
+                    unschdBarchart.selectAll("g text.y-axis-label.y-label")
+                      .attr('dy', '20')
+					  .attr('dx', '25')
+                      .attr('transform', "rotate(0)")
+					  .attr('text-anchor',"top");
+                })
+		.on('pretransition', function(unschdBarchart) {
+		unschdBarchart.xUnits(function(){return 10;});
+        unschdBarchart.selectAll("rect.bar").on("click", function (d) {
+            console.log('click');
+            unschdBarchart.filter(null)
+                .filter(d.data.key)
+                .redrawGroup();
+            });
+        });
+
+	schdBarchart
+		.colors(d3.scaleOrdinal().range(['#0000FF']))
+        .width(900)
+        .height(400)
+		.gap(20)
+        .x(d3.scaleLinear().domain([6,20]))
+		.margins({top: 10, right: 20, bottom: 50, left: 30})
+        .brushOn(false)
+        .yAxisLabel("This is the Y Axis!")
+		.xAxisLabel("Scheduled Downtime")
+        .dimension(unschdBarrunDimension)
+		.renderlet(function (unschdBarchart) {
+                    unschdBarchart.selectAll("g text.y-axis-label.y-label")
+                      .attr('dy', '20')
+					  .attr('dx', '35')
+                      .attr('transform', "rotate(0)")
+					  .attr('text-anchor',"top");
+                })
+        .group(unschdBarspeedSumGroup)
+        .on('renderlet', function(schdBarchart) {
+            schdBarchart.selectAll('rect').on("click", function(d) {
+                console.log("click!", d);
+            });
+        });
+
+  schdBarchart.render();
+  unschdBarchart.render();
+  dc.renderAll();
+
+});
+</script>
+
+</body>
+</html>
