@@ -19,7 +19,7 @@
 		
 	.dc-chart g.tick text {
 		fill: white;
-		font-size:20px;
+		font-size:15px;
 	}
 	
 	body{
@@ -56,13 +56,13 @@
 	
 	<div class="row">
 		<div class="col-md-6">
-			<div class="container" style="margin-top:7%;margin-bottom:5%">
-				<div style="margin-left:1%"id="downscheduledbar"></div>
+			<div class="container" style="margin-top:2%;margin-bottom:5%">
+				<div id="unschdbar"></div>			
 			</div> 
 		</div>
 		<div class="col-md-6">
-		<div class="container" style="margin-top:7%;margin-bottom:5%">
-			<div style="margin-left:1%" id="downunscheduledbar"></div>
+		<div class="container" style="margin-top:2%;margin-bottom:5%">
+				<div id="schdbar"></div>
 		</div>
 		</div>
 	</div>
@@ -74,41 +74,29 @@
 <script type="text/javascript" src="../js/dc.js"></script>					
 <script type="text/javascript">
 var downPie = dc.pieChart("#downpie");
-var unschdBarchart = dc.barChart("#downunscheduledbar");
-var schdBarchart = dc.barChart("#downscheduledbar");
+var unschdBarchart = dc.barChart("#unschdbar");
+var schdBarchart = dc.barChart("#schdbar");
 var dataTable = dc.dataTable("#downtable");
 
-
-d3.csv("data/machinedown.csv").then(function(experiments) {
-
-  experiments.forEach(function(x) {
-        x.Speed = +x.Speed;
-      });
+d3.csv("data/Maint.csv").then(function(experiments) {
 	  
-  var pindx           = crossfilter(experiments),
-      pirunDimension  = pindx.dimension(function(d) {return "time-"+d.Run;})
-	  pispeedSumGroup = pirunDimension.group().reduceSum(function(d) {return d.Speed * d.Run;});
-	  
-	  unschdBarndx                 = crossfilter(experiments),
-      unschdBarrunDimension        = unschdBarndx.dimension(function(d) {return +d.Run;}),
-      unschdBarspeedSumGroup       = unschdBarrunDimension.group().reduceSum(function(d) {return d.Speed * d.Run / 1000;});
-	  
-	  schdBarndx                 = crossfilter(experiments),
-      schdBarrunDimension        = schdBarndx.dimension(function(d) {return +d.Run;}),
-      schdBarspeedSumGroup       = schdBarrunDimension.group().reduceSum(function(d) {return d.Speed * d.Run / 1000;});
-
-	  ndx              = crossfilter(experiments),
-      exptDimension    = ndx.dimension(function(d) {return +d.Expt;}),
-      groupedDimension = exptDimension.group().reduce(
+  var ndx           = crossfilter(experiments),
+      Dimension  = ndx.dimension(function(d) {return d.machine_group;})
+	  SumGroup = Dimension.group().reduceSum(function(d) {return d.scheduled_down_duration + d.unscheduled_down_duration;});
+	  UnscheduledGroup = Dimension.group().reduceSum(function(d) {return d.unscheduled_down_duration;});
+	  ScheduledGroup = Dimension.group().reduceSum(function(d) {return d.scheduled_down_duration;});	  
+  
+     groupedDimension = Dimension.group().reduce(
           function (p, v) {
               ++p.number;
-              p.total += +v.Speed;
+              p.total += +v.scheduled_down_duration;
+			  p.total += +v.unscheduled_down_duration;
               p.avg = Math.round(p.total / p.number);
               return p;
           },
           function (p, v) {
               --p.number;
-              p.total -= +v.Speed;
+              p.total -= +(v.scheduled_down_duration);
               p.avg = (p.number == 0) ? 0 : Math.round(p.total / p.number);
               return p;
           },
@@ -116,24 +104,27 @@ d3.csv("data/machinedown.csv").then(function(experiments) {
               return {number: 0, total: 0, avg: 0}
       }),
       rank = function (p) { return "" };
-	
+
+	  
   downPie
-	.colors(d3.scaleOrdinal().range(['#000000','#000033','#000066','#000099','#0000CC','#0000FF']))
+	.colors(d3.scaleOrdinal().range(['#022F40','#0090C1','#45B1D5','#2D4656','#046E8F']))
     .width(850)
     .height(400)
     .slicesCap(4)
 	.cx(300)
     .innerRadius(100)
-    .dimension(pirunDimension)
-	.legend(dc.legend().x(650).y(25).itemHeight(35).gap(35))
-    .group(pispeedSumGroup)
+    .dimension(Dimension)
+	.legend(dc.legend().x(600).y(25).itemHeight(35).gap(35))
+    .group(SumGroup)
     .on('pretransition', function(downPie) {
         downPie.selectAll('text.pie-slice').text(function(d) {
             return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
         })
 		downPie.selectAll('.dc-legend-item text')	<!--customization of legend object is in "pretransition"
 		.attr('dy', '3')							<!-- make labels aligned with legend square indicators
-		.attr('dx','15');							<!-- makes some space between legend square indicator and labels.
+		.attr('dx','15')							<!-- makes some space between legend square indicator and labels.
+		downPie.select('svg')
+		.attr("width", "1200")
 		downPie.select('g')
 		.append("text")
 		.attr("text-anchor", "middle")
@@ -145,71 +136,95 @@ d3.csv("data/machinedown.csv").then(function(experiments) {
 		.attr("dy","30")
 		.text("(%)")
 	    });
-	
+		
 	unschdBarchart
-		.colors(d3.scaleOrdinal().range(['#0000FF']))
-		.width(900)
-        .height(400)
-		.gap(20)
-		.x(d3.scaleLinear().domain([6,20]))
-		<!--.x(d3.scaleBand()) <!--for single bar select
-		<!--.xUnits(dc.units.ordinal) <!-- for single bar select
-        .brushOn(false) <!-- allows time range select -->
-        .yAxisLabel("This is the Y Axis!")
-		.margins({top: 10, right: 20, bottom: 50, left: 30})
-        .xAxisLabel('Unscheduled Downtime')
-        .dimension(unschdBarrunDimension)
-        .group(unschdBarspeedSumGroup)
-		.controlsUseVisibility(true)
-		.renderlet(function (unschdBarchart) {		<!-- customization of bar chart is in "renderlet"
-					unschdBarchart.selectAll("svg")<!-- customize element SVG (Mainframe) first
-                      .attr('height', '450')<!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
-					  .attr('width','1100') <!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
-					unschdBarchart.select("g") <!-- customize element G, area where graph is drawn in
-                      .attr('transform', 'translate(0,30)') <!-- SVG controls the area the graph is drawn in (Starting from top left), while G itself is the whole of the graph. Translate the graph downwards makes room for labels.
-					unschdBarchart.selectAll("g text.x-axis-label") <!-- adjust x-axis-label positioning, debuggable in "inspect element"
-                      .attr('dy', '20')
-                    unschdBarchart.selectAll("g text.y-axis-label.y-label") <!-- adjust y-axis-label positioning, debuggable in "inspect element"
-                      .attr('dy', '-10')
-					  .attr('dx', '25')
-                      .attr('transform', "rotate(0)")
-					  .attr('text-anchor',"top")
-					})
-
-	schdBarchart
-		.colors(d3.scaleOrdinal().range(['#0000FF']))
+		.colors(d3.scaleOrdinal().range(['#0090C1']))
+		.x(d3.scaleBand())
+		.y(d3.scaleLinear().domain([0,140000]))
+		.xUnits(dc.units.ordinal)
         .width(900)
         .height(400)
-		.gap(20)
-        .x(d3.scaleLinear().domain([6,20]))
+		.gap(45)
 		.margins({top: 10, right: 20, bottom: 50, left: 30})
         .brushOn(false)
-        .yAxisLabel("This is the Y Axis!")
+        .yAxisLabel("Cummulative Time (m)")
+		.xAxisLabel("Unscheduled Downtime")
+        .dimension(Dimension)
+		.renderlet(function (unschdBarchart) {
+					unschdBarchart.selectAll("svg") <!-- customize SVG Mainframe first
+                      .attr('height', '500')<!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
+					  .attr('width','1100') <!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
+					unschdBarchart.select("g")	<!-- customize g, full area of graph.
+                      .attr('transform', 'translate(40,80)') <!-- SVG controls the area the graph is drawn in (Starting from top left), while G itself is the whole of the graph. Translate the graph downwards makes room for labels.
+					unschdBarchart.selectAll("g text.x-axis-label")
+                      .attr('dy', '-450')
+					  .attr('font-weight','bold')
+					  .attr('font-size','25')
+					  .attr('text-anchor',"middle")
+					unschdBarchart.selectAll("g.axis.x g.tick text")
+					  .attr('transform','rotate(-25)')
+					  .attr('dy','20')
+					  .attr('dx','-50')
+					unschdBarchart.selectAll("g.axis.y")
+                      .attr('transform', 'translate(30,10)')
+                    unschdBarchart.selectAll("g text.y-axis-label.y-label")
+                      .attr('dy', '-10')
+					  .attr('dx', '-10')
+					  .attr('font-size','20')
+                      .attr('transform', "rotate(0)")
+					  .attr('text-anchor',"top")
+                })
+        .group(UnscheduledGroup)
+        .on('renderlet', function(unschdBarchart) { <!-- allows to click on a bar for a function, clicking is logged in console.
+            unschdBarchart.selectAll('rect').on("click", function(d) {
+                console.log("click!", d);
+            });
+        });
+		
+	schdBarchart
+		.colors(d3.scaleOrdinal().range(['#0090C1']))
+		.x(d3.scaleBand())
+		.y(d3.scaleLinear().domain([0,140000]))
+		.xUnits(dc.units.ordinal)
+        .width(900)
+        .height(400)
+		.gap(45)
+		.margins({top: 10, right: 20, bottom: 50, left: 30})
+        .brushOn(false)
+        .yAxisLabel("Cummulative Time (m)")
 		.xAxisLabel("Scheduled Downtime")
-        .dimension(unschdBarrunDimension)
+        .dimension(Dimension)
 		.renderlet(function (schdBarchart) {
 					schdBarchart.selectAll("svg") <!-- customize SVG Mainframe first
-                      .attr('height', '450')<!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
+                      .attr('height', '500')<!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
 					  .attr('width','1100') <!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
 					schdBarchart.select("g")	<!-- customize g, full area of graph.
-                      .attr('transform', 'translate(0,30)') <!-- SVG controls the area the graph is drawn in (Starting from top left), while G itself is the whole of the graph. Translate the graph downwards makes room for labels.
+                      .attr('transform', 'translate(30,80)') <!-- SVG controls the area the graph is drawn in (Starting from top left), while G itself is the whole of the graph. Translate the graph downwards makes room for labels.
 					schdBarchart.selectAll("g text.x-axis-label")
-                      .attr('dy', '20')
+                      .attr('dy', '-450')
+					  .attr('font-weight','bold')
+					  .attr('font-size','25')
+					  .attr('text-anchor',"middle")
+					schdBarchart.selectAll("g.axis.x g.tick text")
+					  .attr('transform','rotate(-25)')
+					  .attr('dy','20')
+					  .attr('dx','-50')
 					schdBarchart.selectAll("g.axis.y")
                       .attr('transform', 'translate(30,10)')
                     schdBarchart.selectAll("g text.y-axis-label.y-label")
                       .attr('dy', '-10')
-					  .attr('dx', '25')
+					  .attr('dx', '-10')
+					  .attr('font-size','20')
                       .attr('transform', "rotate(0)")
 					  .attr('text-anchor',"top")
                 })
-        .group(schdBarspeedSumGroup)
+        .group(ScheduledGroup)
         .on('renderlet', function(schdBarchart) { <!-- allows to click on a bar for a function, clicking is logged in console.
             schdBarchart.selectAll('rect').on("click", function(d) {
                 console.log("click!", d);
             });
         });
-		
+
 	dataTable
     .width(900)
     .height(480)
@@ -224,17 +239,17 @@ d3.csv("data/machinedown.csv").then(function(experiments) {
                       .attr('style', 'font-size:25px;width:33%;text-align:center;')
                 })
     .columns([
-	{label:'Expt', format: function (d) { return d.key },},
-    {label:'#Run',format: function (d) { return d.value.number },},
-    {label:'Avg(Speed)',format: function (d) { return d.value.avg }}])
-    .sortBy(function (d) { return d.value.avg })
+	{label:'Machine', format: function (d) { return d.key },},
+    {label:'#Runs',format: function (d) { return d.value.number },},
+    {label:'Avg Time(Minutes)',format: function (d) { return d.value.avg }}])
+    .sortBy(function (d) { return d.value.number })
+	.endSlice(5)
     .order(d3.descending)
 	
-	
-  dataTable.render();
-  schdBarchart.render();
+  dataTable.render();	
   unschdBarchart.render();
   downPie.render();
+  schdBarchart.render();
 		
 });
 </script>
