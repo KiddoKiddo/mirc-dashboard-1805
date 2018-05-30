@@ -3,64 +3,219 @@
 <head>
   <title>Maintainance</title>
   <meta charset="UTF-8">
-	<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="css/dc.css"/>
-	<style>
-  .container {
-    background-color: #303030;
-    color: #ffffff;
-
-    width: 100vw;
-    height: 100vh;
-
-    display: grid;
-    grid-template-columns: 50% 50%;
-    grid-template-rows: 100px auto;
-    grid-template-areas:
-      "title"
-      "mttr mtbf"
-      "prod-volume";
-  }
-  .title {
-    grid-area: title;
-  }
+  <link rel="stylesheet" type="text/css" href="css/micr-layout.css"/>
+  <style>
   .mttr {
-    grid-area: mttr;
+    grid-column: 1/3;
+    grid-row: 2;
+    border-right: solid 1px #999999;
+    width: 100%; height: 90%;
   }
   .mtbf {
-    grid-area: mtbf;
+    grid-column: 3/5;
+    grid-row: 2;
   }
-  .prod-volume {
-    grid-area: mtbf;
+  .top-utils {
+    grid-column: 1/5;
+    grid-row: 3;
+    border-top: solid 1px #999999;
+    width: 100%; height: 100%;
   }
-  .pie-chart {
+  .top-util-gauge text{
+    fill: white;
+    font-size: 25px;
+  }
+  /* dc-chart */
+  .dc-chart .axis text {
+    fill: white;
+    font-size:20px;
+  }
 
+  .dc-chart .y-axis-label,
+  .dc-chart .x-axis-label {
+    fill: white;
+    font-size:25px;
+    font-weight: bold;
   }
 
-	</style>
+  .dc-chart .axis path, .dc-chart .axis line {
+    stroke: #999;
+  }
+
+  </style>
 </head>
 <body>
   <div class="container">
     <div class="title">
-      <h1>Maintainance</h1>
+      <h1>
+        Maintainance
+        <span>May 2018</span>
+      </h1>
+      <hr>
     </div>
     <div class="mttr">
+      <div id="mttr-chart"></div>
     </div>
     <div class="mtbf">
+        <div id="mtbf-chart"></div>
     </div>
-    <div class="prod-volume">
-      <div id="" class="pie-chart"></div>
-      <div id="" class="pie-chart"></div>
-      <div id="" class="pie-chart"></div>
-      <div id="" class="pie-chart"></div>
-      <div id="" class="pie-chart"></div>
+    <div class="top-utils">
     </div>
   </div>
-<script type="text/javascript" src="js/d3/d3.min.js"></script>
-<script type="text/javascript" src="js/crossfilter2/crossfilter.js"></script>
-<script type="text/javascript" src="js/dcjs/dc.min.js"></script>
-<script type="text/javascript">
+  <script type="text/javascript" src="js/d3/d3.min.js"></script>
+  <script type="text/javascript" src="js/crossfilter2/crossfilter.js"></script>
+  <script type="text/javascript" src="js/dcjs/dc.min.js"></script>
+  <script type="text/javascript" src="js/moment/moment.js"></script>
+  <script type="text/javascript" src="js/jquery/jquery-3.3.1.min.js "></script>
+  <script type="text/javascript">
+  $(() => {
+    // TODO: Code to get date from url param
+    // Get date and time in URL to to use as filter
+    // $.utils.urlParam('from');
 
+    // TODO: get the first date of current month
+    const current = new Date('2018-05-01 00:00:00');
+
+    // Charts declaration
+    const mttrChart = dc.barChart('#mttr-chart');
+    const mtbfChart = dc.barChart('#mtbf-chart');
+
+    // Read MTTR and MTBF data
+    d3.csv('data/machine_maintenance_per_month.csv')
+    .then((csv_data) => {
+      const data = crossfilter(csv_data);
+      const startingMonthDim = data.dimension(d => d.start_calculation_time);
+      startingMonthDim.filter('2018-05-01 00:00:00'); // Filter by current month
+
+      const machineGroupDim = data.dimension(d => d.machine_group);
+      const mttrGroup = machineGroupDim.group().reduceSum(d => +d.mttr); // Not really sum as each machine group appear only one
+      const mtbfGroup = machineGroupDim.group().reduceSum(d => +d.mtbf);
+
+      mttrChart
+        .width(950).height(450)
+        .margins({top: 70, right: 40, bottom: 200, left: 120})
+        .colors(d3.scaleOrdinal().range(['#0066ff']))
+        .x(d3.scaleBand())
+        .xUnits(dc.units.ordinal)
+        .brushOn(false)
+        .yAxisLabel("MTTR (min)")
+        .dimension(machineGroupDim)
+        .group(mttrGroup)
+        .gap(10)
+        .on('renderlet', (chart) => {
+          // Move the y label of chart to top of axis
+          chart.select('.y-axis-label.y-label')
+            .attr('transform', 'translate(100,30),rotate(0)');
+          // Rotate x label
+          chart.selectAll('g.axis.x g.tick text')
+            .attr('transform', 'rotate(-45)')
+            .attr('text-anchor', 'end');
+        })
+        .render();
+
+      mtbfChart
+        .width(950).height(450)
+        .margins({top: 70, right: 40, bottom: 200, left: 120})
+        .colors(d3.scaleOrdinal().range(['#0066ff']))
+        .x(d3.scaleBand())
+        .xUnits(dc.units.ordinal)
+        .brushOn(false)
+        .yAxisLabel("MTBF (min)")
+        .dimension(machineGroupDim)
+        .group(mtbfGroup)
+        .gap(10)
+        .on('renderlet', (chart) => {
+          // Move the y label of chart to top of axis
+          chart.select('.y-axis-label.y-label')
+            .attr('transform', 'translate(100,30),rotate(0)');
+          // Rotate x label
+          chart.selectAll('g.axis.x g.tick text')
+            .attr('transform', 'rotate(-45)')
+            .attr('text-anchor', 'end');
+        })
+        .render();
+    });
+
+    // Read ultilization data
+    d3.csv('data/machine_utilization_per_month.csv')
+    .then((csv_data) => {
+      const data = crossfilter(csv_data);
+
+      const startingMonthDim = data.dimension(d => d.start_calculation_time);
+      startingMonthDim.filter('2018-05-01 00:00:00'); // Filter by current month
+
+      const machineDim = data.dimension(d => d.machine_name);
+      const utilizationGroup = machineDim.group().reduceSum(d => +d.utilization_rate); // Not really sum as each machine group appear only one
+      const topUtilizationGroup = utilizationGroup.top(5);
+      console.log(topUtilizationGroup);
+
+      const width = 384;
+      d3.select('.top-utils')
+        .selectAll('svg')
+          .data(topUtilizationGroup)
+        .enter().append('svg')
+          .attr('width', width).attr('height', '100%')
+          .each(function(d, i){
+            const container = d3.select(this);
+
+            // Utilization value
+            container.append('text')
+                        .attr('fill', 'white')
+                        .attr('font-size', 50)
+                        .attr('text-anchor', 'middle')
+                        .attr('transform', `translate(${width*0.5}, 250)`)
+                        .text(d.value+'%');
+            // Machine name
+            container.append('text')
+                        .attr('fill', 'white')
+                        .attr('font-size', 18)
+                        .attr('text-anchor', 'middle')
+                        .attr('transform', `translate(${width*0.5}, 300)`)
+                        .text(d.key);
+
+            // Gauge
+            var defs = container.append("defs");
+            var gradient = defs.append("linearGradient")
+                 .attr("id", "svgGradient")
+                 .attr("x1", "0%") .attr("y1", "0%")
+                 .attr("x2", "100%").attr("y2", "100%");
+
+            gradient.append("stop")
+                 .attr('class', 'start')
+                 .attr("offset", "0%")
+                 .attr("stop-color", "#0066ff")
+                 .attr("stop-opacity", 1);
+
+            gradient.append("stop")
+                 .attr('class', 'end')
+                 .attr("offset", "100%")
+                 .attr("stop-color", "#8409B4")
+                 .attr("stop-opacity", 0.5);
+
+            const arc = d3.arc()
+                .innerRadius(130)
+                .outerRadius(150)
+                .startAngle(2*Math.PI* (1-d.value/100))
+                .endAngle(2*Math.PI);
+
+            container.append('path')
+              .attr('d', arc())
+              .attr('stroke', 'none')
+              .attr('fill', 'url(#svgGradient)')
+              .attr('stroke-width', 2)
+              .attr('transform', `translate(${width*0.5}, 250)`);
+            // container.append(arc);
+          });
+    });
+  });
+
+
+
+  const somefunc = (a, b, c) => {
+    console.log(a, b, c);
+  }
 
 </script>
 

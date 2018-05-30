@@ -4,4 +4,9 @@ var app = express();
 //setting middleware
 app.use(express.static(__dirname + '/public')); //Serves resources from public folder
 
-var server = app.listen(3000);
+
+
+const port = process.env.PORT || 3000;
+var server = app.listen(port, () => {
+  console.log(`Application is listening on port ${port}!`);
+});

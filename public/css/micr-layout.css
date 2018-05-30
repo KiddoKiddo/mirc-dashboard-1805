@@ -1,0 +1,26 @@
+.container {
+  background-color: #303030;
+  color: #ffffff;
+
+  width: 100vw;
+  height: 100vh;
+
+  display: grid;
+  grid-auto-columns: 1fr; /* auto add column with equal size */
+  grid-template-rows: 100px 1fr 1fr;
+
+  align-items: center;
+  justify-items: center;
+}
+.title {
+  grid-column: 1/5;
+  grid-row: 1;
+  place-self: center stretch;
+  padding: 20px;
+}
+.title span {
+  float: right;
+}
+.title hr {
+  border-color: #999999;
+}
