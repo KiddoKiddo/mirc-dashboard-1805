@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Quick Stats</title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="css/dc.css"/>
+  <link rel="stylesheet" type="text/css" href="css/micr-layout.css"/>
+  <style>
+  .order-1, .output-1, .gauge-1 {
+    grid-row: 1;
+  }
+  .order-2, .output-2, .gauge-2 {
+    grid-row: 2;
+  }
+  .trend {
+    grid-row: 3;
+    grid-column: 1 / 4;
+  }
+  /* dc-chart */
+  .dc-chart .axis text {
+    fill: white;
+    font-size:20px;
+  }
+  .dc-chart .y-axis-label,
+  .dc-chart .x-axis-label {
+    fill: white;
+    font-size:25px;
+    font-weight: bold;
+  }
+  .dc-chart .axis path, .dc-chart .axis line {
+    stroke: #999;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">
+      <h1>
+        Quick Stats
+        <span>30/01/2018</span>
+      </h1>
+      <hr>
+    </div>
+    <div class="container-grid">
+      <div class="order-1">31 orders</div>
+      <div class="output-1">31 outputs</div>
+      <div class="gauge-1">Some gauge here</div>
+      <div class="order-2">31 orders</div>
+      <div class="output-2">31 outputs</div>
+      <div class="gauge-2">Some gauge here</div>
+      <div class="trend">
+        <div id="trend-chart"></div>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="js/d3/d3.min.js"></script>
+  <script type="text/javascript" src="js/crossfilter2/crossfilter.js"></script>
+  <script type="text/javascript" src="js/dcjs/dc.min.js"></script>
+  <script type="text/javascript" src="js/moment/moment.js"></script>
+  <script type="text/javascript" src="js/jquery/jquery-3.3.1.min.js "></script>
+  <script type="text/javascript">
+  $(() => {
+    // TODO: Code to get date from url param
+    // Get date and time in URL to to use as filter
+    // $.utils.urlParam('from');
+
+    // TODO: get the first date of current month
+    const current = new Date('2018-05-01 00:00:00');
+    const currentStr = moment(current).format('YYYY-MM-DD HH:mm:ss');
+
+    // Chart declaration
+    const mttrChart = dc.barChart('#trend-chart');
+
+
+  });
+</script>
+
+</body>
+</html>

@@ -9,17 +9,16 @@
   <style>
   .mttr {
     grid-column: 1/3;
-    grid-row: 2;
+    grid-row: 1;
     border-right: solid 1px #999999;
-    width: 100%; height: 90%;
   }
   .mtbf {
     grid-column: 3/5;
-    grid-row: 2;
+    grid-row: 1;
   }
   .top-utils {
     grid-column: 1/5;
-    grid-row: 3;
+    grid-row: 2;
     border-top: solid 1px #999999;
     width: 100%; height: 100%;
   }
@@ -55,13 +54,16 @@
       </h1>
       <hr>
     </div>
-    <div class="mttr">
-      <div id="mttr-chart"></div>
-    </div>
-    <div class="mtbf">
-        <div id="mtbf-chart"></div>
-    </div>
-    <div class="top-utils">
+    <div class="container-grid">
+      <div class="mttr">
+        <div id="mttr-chart"></div>
+      </div>
+      <div class="mtbf">
+          <div id="mtbf-chart"></div>
+      </div>
+      <div class="top-utils">
+        <div class="panel-title">Top 5 Utilization Machine</div>
+      </div>
     </div>
   </div>
   <script type="text/javascript" src="js/d3/d3.min.js"></script>
@@ -77,6 +79,7 @@
 
     // TODO: get the first date of current month
     const current = new Date('2018-05-01 00:00:00');
+    const currentStr = moment(current).format('YYYY-MM-DD HH:mm:ss');
 
     // Charts declaration
     const mttrChart = dc.barChart('#mttr-chart');
@@ -87,7 +90,7 @@
     .then((csv_data) => {
       const data = crossfilter(csv_data);
       const startingMonthDim = data.dimension(d => d.start_calculation_time);
-      startingMonthDim.filter('2018-05-01 00:00:00'); // Filter by current month
+      startingMonthDim.filter(currentStr); // Filter by current month
 
       const machineGroupDim = data.dimension(d => d.machine_group);
       const mttrGroup = machineGroupDim.group().reduceSum(d => +d.mttr); // Not really sum as each machine group appear only one
@@ -99,6 +102,7 @@
         .colors(d3.scaleOrdinal().range(['#0066ff']))
         .x(d3.scaleBand())
         .xUnits(dc.units.ordinal)
+        .elasticX(true)
         .brushOn(false)
         .yAxisLabel("MTTR (min)")
         .dimension(machineGroupDim)
@@ -108,10 +112,17 @@
           // Move the y label of chart to top of axis
           chart.select('.y-axis-label.y-label')
             .attr('transform', 'translate(100,30),rotate(0)');
+
           // Rotate x label
           chart.selectAll('g.axis.x g.tick text')
             .attr('transform', 'rotate(-45)')
             .attr('text-anchor', 'end');
+
+          // Highlight
+          chart.selectAll('rect').on("click", function(d) {
+              mttrChart.filter(d.data.key);
+              mtbfChart.filter(d.data.key);
+          });
         })
         .render();
 
@@ -121,6 +132,7 @@
         .colors(d3.scaleOrdinal().range(['#0066ff']))
         .x(d3.scaleBand())
         .xUnits(dc.units.ordinal)
+        .elasticX(true)
         .brushOn(false)
         .yAxisLabel("MTBF (min)")
         .dimension(machineGroupDim)
@@ -134,6 +146,12 @@
           chart.selectAll('g.axis.x g.tick text')
             .attr('transform', 'rotate(-45)')
             .attr('text-anchor', 'end');
+
+            // Highlight
+            chart.selectAll('rect').on("click", function(d) {
+              mttrChart.filter(d.data.key);
+              mtbfChart.filter(d.data.key);
+            });
         })
         .render();
     });
@@ -144,12 +162,11 @@
       const data = crossfilter(csv_data);
 
       const startingMonthDim = data.dimension(d => d.start_calculation_time);
-      startingMonthDim.filter('2018-05-01 00:00:00'); // Filter by current month
+      startingMonthDim.filter(currentStr); // Filter by current month
 
       const machineDim = data.dimension(d => d.machine_name);
       const utilizationGroup = machineDim.group().reduceSum(d => +d.utilization_rate); // Not really sum as each machine group appear only one
       const topUtilizationGroup = utilizationGroup.top(5);
-      console.log(topUtilizationGroup);
 
       const width = 384;
       d3.select('.top-utils')
@@ -165,14 +182,14 @@
                         .attr('fill', 'white')
                         .attr('font-size', 50)
                         .attr('text-anchor', 'middle')
-                        .attr('transform', `translate(${width*0.5}, 250)`)
+                        .attr('transform', `translate(${width*0.5}, 200)`)
                         .text(d.value+'%');
             // Machine name
             container.append('text')
                         .attr('fill', 'white')
                         .attr('font-size', 18)
                         .attr('text-anchor', 'middle')
-                        .attr('transform', `translate(${width*0.5}, 300)`)
+                        .attr('transform', `translate(${width*0.5}, 250)`)
                         .text(d.key);
 
             // Gauge
@@ -205,18 +222,10 @@
               .attr('stroke', 'none')
               .attr('fill', 'url(#svgGradient)')
               .attr('stroke-width', 2)
-              .attr('transform', `translate(${width*0.5}, 250)`);
-            // container.append(arc);
+              .attr('transform', `translate(${width*0.5}, 200)`);
           });
     });
   });
-
-
-
-  const somefunc = (a, b, c) => {
-    console.log(a, b, c);
-  }
-
 </script>
 
 </body>

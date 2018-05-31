@@ -16,14 +16,14 @@
 		fill: white;
 		font-size: 25px;
 	}
-		
+
 	.dc-chart g.tick text {
 		fill: white;
 		font-size:20px;
 	}
-	
+
 	body{
-    position: fixed; 
+    position: fixed;
     width: 100%;
 	}
 	</style>
@@ -53,14 +53,14 @@
 				</div>
 			</div>
 	</div>
-	
+
 	<h1>
 		<div class="row">
 			<div class="col" style="margin-left:1%">Cost</div>
 		</div>
 	</h1>
 	<hr style="border-color:white;margin-bottom:0">
-		
+
 	<div class="row">
 		<div class="col-md-6">
 					<table class="table table-striped table-dark" id="downtable"></table>
@@ -74,7 +74,7 @@
 
 <script type="text/javascript" src="../js/d3.js"></script>
 <script type="text/javascript" src="../js/crossfilter.js"></script>
-<script type="text/javascript" src="../js/dc.js"></script>					
+<script type="text/javascript" src="../js/dc.js"></script>
 <script type="text/javascript">
 var downPie1 = dc.pieChart("#downpie1");
 	downPie2 = dc.pieChart("#downpie2");
@@ -88,19 +88,19 @@ d3.csv("machinedown.csv").then(function(experiments) {
   experiments.forEach(function(x) {
         x.Speed = +x.Speed;
       });
-	  
+
   var pindx           = crossfilter(experiments),
       pirunDimension  = pindx.dimension(function(d) {return "time-"+d.Run;})
 	  pispeedSumGroup = pirunDimension.group().reduceSum(function(d) {return d.Speed * d.Run;});
-	  	  
+
 	  schdBarndx                 = crossfilter(experiments),
       schdBarrunDimension        = schdBarndx.dimension(function(d) {return +d.Run;}),
       schdBarspeedSumGroup       = schdBarrunDimension.group().reduceSum(function(d) {return d.Speed * d.Run / 1000;});
-	  
+
       ordndx            = crossfilter(experiments),
       ordDimension = ordndx.dimension(function(d) {return d.Run;}),
       ordGroup       = ordDimension.group().reduceSum(function(d) {return d.Speed;});
-	  
+
 	  ndx              = crossfilter(experiments),
       exptDimension    = ndx.dimension(function(d) {return +d.Expt;}),
       groupedDimension = exptDimension.group().reduce(
@@ -135,7 +135,7 @@ d3.csv("machinedown.csv").then(function(experiments) {
             return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
         })
 	    });
-	
+
   downPie2
 	.colors(d3.scaleOrdinal().range(['#000000','#000033','#000066','#000099','#0000CC','#0000FF']))
     .width(850/1.5)
@@ -149,7 +149,7 @@ d3.csv("machinedown.csv").then(function(experiments) {
             return d.data.key + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
         })
 	    });
-		
+
 	schdBarchart
         .width(1100)
         .height(500)
@@ -183,7 +183,7 @@ d3.csv("machinedown.csv").then(function(experiments) {
                 console.log("click!", d);
             });
         });
-		
+
       ordinalChart
           .width(850)
           .height(380/1.5)
@@ -206,7 +206,7 @@ d3.csv("machinedown.csv").then(function(experiments) {
 					});
 
       ordinalChart.render();
-	  
+
 	dataTable
     .width(900)
     .height(480)
@@ -226,15 +226,15 @@ d3.csv("machinedown.csv").then(function(experiments) {
     {label:'Sold Items',format: function (d) { return d.value.avg }}])
     .sortBy(function (d) { return d.value.avg })
     .order(d3.descending)
-	
-	
+
+
   dataTable.render();
   ordinalChart.render();
   schdBarchart.render();
   downPie1.render();
   downPie2.render();
 
-		
+
 });
 </script>
 

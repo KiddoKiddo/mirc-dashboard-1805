@@ -4,23 +4,27 @@
 
   width: 100vw;
   height: 100vh;
-
-  display: grid;
-  grid-auto-columns: 1fr; /* auto add column with equal size */
-  grid-template-rows: 100px 1fr 1fr;
-
-  align-items: center;
-  justify-items: center;
 }
 .title {
-  grid-column: 1/5;
-  grid-row: 1;
-  place-self: center stretch;
-  padding: 20px;
+  height: 100px;
+  margin: 20px 30px;
+}
+.container-grid {
+  display: grid;
+  grid-auto-columns: 1fr; /* auto add column with equal size */
+  grid-auto-rows: 1fr;
+  align-items: center;
+  justify-items: center;
 }
 .title span {
   float: right;
 }
 .title hr {
   border-color: #999999;
+}
+.panel-title {
+  color: white;
+  font-size: 35px;
+  font-weight: bold;
+  margin: 30px 30px 0px;
 }

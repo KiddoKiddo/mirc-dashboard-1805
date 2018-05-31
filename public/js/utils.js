@@ -12,6 +12,13 @@ $.utils.print_filter = (filter) => {
 	console.log(filter+"("+f.length+") = "+JSON.stringify(f).replace("[","[\n\t").replace(/}\,/g,"},\n\t").replace("]","\n]"));
 }
 
-$.util.gauge = (element, value, options) = {
-  
+$.util.colors = () = {
+  return {
+    'color-1': [],
+    'color-2': [],
+    'color-3': [],
+    'color-1-mix': [],
+    'color-2-mix': [],
+    'color-3-mix': [],
+  }
 }
