@@ -99,7 +99,7 @@
       mttrChart
         .width(950).height(450)
         .margins({top: 70, right: 40, bottom: 200, left: 120})
-        .colors(d3.scaleOrdinal().range(['#0066ff']))
+        .colors(d3.scaleOrdinal().range(['#0090C1']))
         .x(d3.scaleBand())
         .xUnits(dc.units.ordinal)
         .elasticX(true)
@@ -129,7 +129,7 @@
       mtbfChart
         .width(950).height(450)
         .margins({top: 70, right: 40, bottom: 200, left: 120})
-        .colors(d3.scaleOrdinal().range(['#0066ff']))
+        .colors(d3.scaleOrdinal().range(['#0090C1']))
         .x(d3.scaleBand())
         .xUnits(dc.units.ordinal)
         .elasticX(true)
@@ -193,23 +193,6 @@
                         .text(d.key);
 
             // Gauge
-            var defs = container.append("defs");
-            var gradient = defs.append("linearGradient")
-                 .attr("id", "svgGradient")
-                 .attr("x1", "0%") .attr("y1", "0%")
-                 .attr("x2", "100%").attr("y2", "100%");
-
-            gradient.append("stop")
-                 .attr('class', 'start')
-                 .attr("offset", "0%")
-                 .attr("stop-color", "#0066ff")
-                 .attr("stop-opacity", 1);
-
-            gradient.append("stop")
-                 .attr('class', 'end')
-                 .attr("offset", "100%")
-                 .attr("stop-color", "#8409B4")
-                 .attr("stop-opacity", 0.5);
 
             const arc = d3.arc()
                 .innerRadius(130)
@@ -220,7 +203,7 @@
             container.append('path')
               .attr('d', arc())
               .attr('stroke', 'none')
-              .attr('fill', 'url(#svgGradient)')
+              .attr('fill', '#0090C1')
               .attr('stroke-width', 2)
               .attr('transform', `translate(${width*0.5}, 200)`);
           });
