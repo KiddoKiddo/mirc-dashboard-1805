@@ -5,7 +5,9 @@
   height: 60px;
   width: 0px;
   z-index: 5;
-  background: linear-gradient(to right, rgba(204, 204, 204, 0.25) , rgba(0, 0, 0, 0))
+  background: linear-gradient(to right, rgba(204, 204, 204, 0.25) , rgba(0, 0, 0, 0));
+  background: -moz-linear-gradient(to right, rgba(204, 204, 204, 0.25) , rgba(0, 0, 0, 0));
+  background: -webkit-linear-gradient(to right, rgba(204, 204, 204, 0.25) , rgba(0, 0, 0, 0));
   box-shadow: -5px 3px 20px 0px #1b1a1a60;
   border-radius: 3em 0.5em 0.5em 3em;
   font-size: 25px;
@@ -36,7 +38,7 @@
   margin-left: 20px;
 }
 .datefilter-forward, .datefilter-backward {
-  background: #00000000;
+  background: rgba(0, 0, 0, 0);
   height: 100%;
   width: 50px;
   border: none;
