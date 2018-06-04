@@ -5,7 +5,7 @@
   height: 60px;
   width: 0px;
   z-index: 5;
-  background: linear-gradient(to right, #cccccc40 , #00000000);
+  background: linear-gradient(to right, rgba(204, 204, 204, 0.25) , rgba(0, 0, 0, 0))
   box-shadow: -5px 3px 20px 0px #1b1a1a60;
   border-radius: 3em 0.5em 0.5em 3em;
   font-size: 25px;
@@ -22,7 +22,7 @@
   transition-duration: 0.3s;
 }
 .datefilter-choices a:hover {
-  text-shadow: 3px 3px 10px #ffffff60;
+  text-shadow: 3px 3px 10px rgba(255, 255, 255, 0.35);
   text-decoration: none;
   transform: scale(1.2);
 }
@@ -47,7 +47,7 @@
 .datefilter-forward:focus, .datefilter-backward:focus{ outline: none; }
 .datefilter-forward:hover, .datefilter-backward:hover{ transform: scale(1.2); }
 .datefilter-btn {
-  background: #00000000;
+  background: rgba(0, 0, 0, 0);
   color: white;
   font-family: 'Open Sans', sans-serif;
   font-size: 25px;
