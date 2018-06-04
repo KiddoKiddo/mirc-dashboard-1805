@@ -6,7 +6,7 @@
   height: 100vh;
 }
 .title {
-  width: 100%;
+  width: auto;
   height: 100px;
   margin: 20px 30px;
 }

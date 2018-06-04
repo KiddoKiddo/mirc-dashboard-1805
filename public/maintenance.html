@@ -115,7 +115,7 @@
 
           // Rotate x label
           chart.selectAll('g.axis.x g.tick text')
-            .attr('transform', 'rotate(-45)')
+            .attr('transform', 'rotate(-30)')
             .attr('text-anchor', 'end');
 
           // Highlight
@@ -144,7 +144,7 @@
             .attr('transform', 'translate(100,30),rotate(0)');
           // Rotate x label
           chart.selectAll('g.axis.x g.tick text')
-            .attr('transform', 'rotate(-45)')
+            .attr('transform', 'rotate(-30)')
             .attr('text-anchor', 'end');
 
             // Highlight
@@ -193,7 +193,6 @@
                         .text(d.key);
 
             // Gauge
-
             const arc = d3.arc()
                 .innerRadius(130)
                 .outerRadius(150)
