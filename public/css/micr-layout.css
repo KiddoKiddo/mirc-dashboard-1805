@@ -1,6 +1,7 @@
 .container {
   background-color: #303030;
   color: #ffffff;
+  font-family: 'Open Sans', sans-serif;
 
   width: 100vw;
   height: 100vh;
@@ -17,7 +18,7 @@
   align-items: center;
   justify-items: center;
 }
-.title span {
+.title button {
   float: right;
 }
 .title hr {

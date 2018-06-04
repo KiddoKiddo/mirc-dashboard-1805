@@ -1,0 +1,61 @@
+.datefilter-menu {
+  position: fixed;
+  top: 10px;
+  right: 200px;
+  height: 60px;
+  width: 0px;
+  z-index: 5;
+  background: linear-gradient(to right, #cccccc40 , #00000000);
+  box-shadow: -5px 3px 20px 0px #1b1a1a60;
+  border-radius: 3em 0.5em 0.5em 3em;
+  font-size: 25px;
+}
+.datefilter-menu * {
+  display: inline;
+}
+.datefilter-hidden *{
+  display: none;
+}
+.datefilter-choices a {
+  color: white;
+  padding: 0px 20px;
+  transition-duration: 0.3s;
+}
+.datefilter-choices a:hover {
+  text-shadow: 3px 3px 10px #ffffff60;
+  text-decoration: none;
+  transform: scale(1.2);
+}
+.datefilter-choices ul {
+  margin: 0;
+}
+.datefilter-choices li:not(:last-child)::after{
+  content: "|";
+}
+.datefilter-backward {
+  margin-left: 20px;
+}
+.datefilter-forward, .datefilter-backward {
+  background: #00000000;
+  height: 100%;
+  width: 50px;
+  border: none;
+  color: white;
+  font-size: 30px;
+  transition-duration: 0.3s;
+}
+.datefilter-forward:focus, .datefilter-backward:focus{ outline: none; }
+.datefilter-forward:hover, .datefilter-backward:hover{ transform: scale(1.2); }
+.datefilter-btn {
+  background: #00000000;
+  color: white;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 25px;
+  padding: 10px 20px;
+  border: white 3px solid;
+  border-radius: 20px;
+  transition-duration: 0.3s;
+  cursor: pointer;
+}
+.datefilter-btn:focus{ outline: none; }
+.datefilter-btn:hover{ transform: scale(1.2); }
