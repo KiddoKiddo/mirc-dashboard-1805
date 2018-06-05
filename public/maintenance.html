@@ -89,11 +89,13 @@
                       .format('YYYY-MM-DD HH:mm:ss');
 
     const datefilter = new DateFilter({
-      current: current,
-      button: $('.title button'),
-      level: 'month',
-      range: 6,
+      current: current, // Set today date
+      button: $('.title button'), // Button to open the filter
+      level: 'day', // 'month' or 'day'
       onDataChange: (date) => {
+        // date is string
+        // E.g: '2018-06-01 00:00:00' for month selection (first day of the month)
+        //      '2018-07-28 00:00:00' for date selection
         // Update charts
         monthDim1.filterAll(); // Remove filters
         monthDim1.filter(date); // Filter by current month
@@ -212,7 +214,6 @@
       gauge.enter().append('svg')
           .attr('width', width).attr('height', '90%')
           .each(function(d, i){
-            console.log(d);
             const container = d3.select(this);
 
             // Utilization value
