@@ -6,33 +6,49 @@
   <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="css/dc.css"/>
   <link rel="stylesheet" type="text/css" href="css/micr-layout.css"/>
+  <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
+  
   <style>
-  .order-1, .output-1, .gauge-1 {
-    grid-row: 1;
-  }
-  .order-2, .output-2, .gauge-2 {
-    grid-row: 2;
-  }
-  .trend {
-    grid-row: 3;
-    grid-column: 1 / 4;
-    border-top: solid 1px #999999;
-    width: 100%; height: 100%;
-  }
-  /* dc-chart */
-  .dc-chart .axis text {
-    fill: white;
-    font-size:20px;
-  }
-  .dc-chart .y-axis-label,
-  .dc-chart .x-axis-label {
-    fill: white;
-    font-size:25px;
-    font-weight: bold;
-  }
-  .dc-chart .axis path, .dc-chart .axis line {
-    stroke: #999;
-  }
+	  .title span {
+		float: right;
+	  }
+	  .order-1, .output-1, .gauge-1 {
+		grid-row: 1;
+		font-size: 50px;
+	  }
+	  .order-2, .output-2, .gauge-2 {
+		grid-row: 2;
+		font-size: 50px;
+	  }
+	  .trend {
+		grid-row: 3;
+		grid-column: 1 / 4;
+		border-top: solid 1px #999999;
+		width: 100%; height: 100%;
+	  }
+	  /* dc-chart */
+	  .dc-chart .axis text {
+		fill: white;
+		font-size:20px;
+	  }
+	  .dc-chart .y-axis-label,
+	  .dc-chart .x-axis-label {
+		fill: white;
+		font-size:25px;
+		font-weight: bold;
+	  }
+	  .dc-chart .axis path, .dc-chart .axis line {
+		stroke: #999;
+	  }
+	  
+	  .container-grid {
+		font-size: 25px;
+	  }
+	  .number {
+		margin: 0.5em;
+		font-size: 80px;
+		font-weight: bold;
+	  }		
   </style>
 </head>
 <body>
@@ -40,19 +56,20 @@
     <div class="title">
       <h1>
         Quick Stats
-        <span>30/01/2018</span>
+        <button class="datefilter-btn"></button>
       </h1>
       <hr>
     </div>
     <div class="container-grid">
-      <div class="order-1">31 orders</div>
-      <div class="output-1">31 outputs</div>
-      <div class="gauge-1">Some gauge here</div>
-      <div class="order-2">31 orders</div>
-      <div class="output-2">31 outputs</div>
-      <div class="gauge-2">Some gauge here</div>
+      <div class="order-1"><div class="number">31</div> Orders</div>
+      <div class="output-1"><div class="number">31</div> Outputs</div>
+      <div class="gauge-1"></div>
+      <div class="order-2"><div class="number">31</div> Orders</div>
+      <div class="output-2"><div class="number">31</div> Outputs</div>
+      <div class="gauge-2"></div>
       <div class="trend">
         <div id="trend-chart"></div>
+		<div id="orders-chart"></div>
       </div>
     </div>
   </div>
@@ -61,6 +78,8 @@
   <script type="text/javascript" src="js/dcjs/dc.min.js"></script>
   <script type="text/javascript" src="js/moment/moment.js"></script>
   <script type="text/javascript" src="js/jquery/jquery-3.3.1.min.js "></script>
+  <script type="text/javascript" src="js/animejs/anime.min.js"></script>
+  <script type="text/javascript" src="js/datefilter/datefilter.js"></script>
   <script type="text/javascript">
   $(() => {
     // TODO: Code to get date from url param
@@ -68,14 +87,127 @@
     // $.utils.urlParam('from');
 
     // TODO: get the first date of current month
-    const current = new Date('2018-05-01 00:00:00');
-    const currentStr = moment(current).format('YYYY-MM-DD HH:mm:ss');
+    <!-- const current = new Date('2018-05-01 00:00:00'); -->
+    <!-- const currentStr = moment(current).format('YYYY-MM-DD HH:mm:ss'); -->
+	
+	const current = new Date(), year = current.getFullYear(), month = current.getMonth(), day = current.getDate();
+    const currentStr = moment(new Date(year, month, day))
+                      .format('YYYY-MM-DD HH:mm:ss');
+	const week = current.setDate(current.getDate()-8);
+	const weekStr = moment(week).format('YYYY-MM-DD HH:mm:ss');
+					  
+	const datefilter = new DateFilter({
+	current: current, // Set today date
+	button: $('.title button'), // Button to open the filter
+	level: 'day', // 'month' or 'day'
+	onDataChange: (date) => {
+		// date is string
+		// E.g: '2018-06-01 00:00:00' for month selection (first day of the month)
+		//      '2018-07-28 00:00:00' for date selection
+		// Update charts
+		const dateNum = new Date(date);
+		const dateWeekStr = moment(dateNum.setDate(dateNum.getDate()-8)).format('YYYY-MM-DD HH:mm:ss');
+		
+		weekDim.filterAll(); // Remove filters
+		weekDim.filterRange([new Date(dateWeekStr), new Date(date)]); // Filter by current month
+		domainCurrent = new Date(date);
+		domainWeek = new Date(dateWeekStr);
+		console.log(date);
+		
+		renderPlots(trend);
+
+	  }
+    })
 
     // Chart declaration
-    const mttrChart = dc.barChart('#trend-chart');
+    const trendChart = dc.barChart('#trend-chart');
+	const ordersChart = dc.lineChart('#orders-chart');
+	let trend;
+	let weekDim;
+	let domainCurrent, domainWeek;
+	
+   // Read throughput data
+     d3.csv('data/throughput_per_date_2.csv')
+     .then((csv_data) => {
+		trend = crossfilter(csv_data);
+		weekDim = trend.dimension(d => moment(d.date, "YYYY-MM-DD hh:mm:ss"));
+		weekDim.filter([new Date(weekStr), new Date(currentStr)]);
+		domainCurrent = new Date(currentStr);
+		domainWeek = new Date(weekStr);
+		console.log(currentStr);
+		
+		renderPlots(trend);
+	});
+   
+   //Draw charts
+   const renderPlots = (data) => {
+		const dateDim = data.dimension(d => moment(d.date, "YYYY-MM-DD hh:mm:ss"));	
+		const throughputGroup = dateDim.group().reduceSum(d => +d.throughput);
+		const ordersGroup = dateDim.group().reduceSum(d => +d.orders);
+		
+			trendChart
+				.width(950).height(450)
+				.margins({top: 70, right: 40, bottom: 160, left: 120})
+				.colors(d3.scaleOrdinal().range(['#0090C1']))
+				.x(d3.scaleTime().domain([domainWeek, domainCurrent]))
+				.xUnits(d3.timeDays)
+				.elasticX(false) 
+				.brushOn(false)
+				.turnOnControls(true)
+				.yAxisLabel('Throughput')
+				.dimension(dateDim) 
+				.group(throughputGroup)
+				.gap(50)
+				.mouseZoomable(false)
+				.on('pretransition', (chart) => {
+				  // Rotate x label
+				  chart.selectAll('g.axis.x g.tick text')
+					.attr('transform', 'rotate(-30)')
+					.attr('text-anchor', 'end');
 
-  });
+					// Highlight
+					chart.selectAll('rect').on('click', function(d) {
+					  trendChart.filter(d.data.key);
+					});
+				})
+				.on('renderlet', (chart) => {
+				  // Move the y label of chart to top of axis
+				  chart.select('.y-axis-label.y-label')
+					.attr('transform', 'translate(100,30),rotate(0)');
+				});
+			
+			ordersChart
+				.width(950).height(450)
+				.margins({top: 70, right: 40, bottom: 160, left: 120})
+				.x(d3.scaleTime().domain([domainWeek, domainCurrent]))
+				.renderArea(true)
+				.brushOn(false)
+				.renderDataPoints(true)
+				.clipPadding(10)
+				.yAxisLabel('Orders')
+				.dimension(weekDim)
+				.group(ordersGroup)
+				.on('pretransition', (chart) => {
+				  // Rotate x label
+				  chart.selectAll('g.axis.x g.tick text')
+					.attr('transform', 'rotate(-30)')
+					.attr('text-anchor', 'end');
+
+					// Highlight
+					chart.selectAll('rect').on('click', function(d) {
+					  trendChart.filter(d.data.key);
+					});
+				})
+				.on('renderlet', (chart) => {
+				  // Move the y label of chart to top of axis
+				  chart.select('.y-axis-label.y-label')
+					.attr('transform', 'translate(100,30),rotate(0)');
+				});
+				
+		dc.renderAll();
+	};
+});
+	
 </script>
-
 </body>
 </html>
