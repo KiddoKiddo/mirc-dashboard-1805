@@ -117,6 +117,9 @@
           month = today.getMonth();
     const firstDayOfMonth = moment(new Date(year, month, 1));
 
+    // Move to starting of range
+    firstDayOfMonth.add(-this._range+1, 'months');
+
     let html = '<ul>';
     for(let i = 0; i < this._range; i++) {
       const data = firstDayOfMonth.format('YYYY-MM-DD HH:mm:ss');

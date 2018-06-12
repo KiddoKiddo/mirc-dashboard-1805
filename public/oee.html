@@ -4,16 +4,12 @@
   <title>Maintainance</title>
   <meta charset="UTF-8">
   <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
+        integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
   <link rel="stylesheet" type="text/css" href="css/dc.css"/>
   <link rel="stylesheet" type="text/css" href="css/micr-layout.css"/>
   <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
   <style>
-  .container-grid {
-    /* To make sure the horizontal partial white line in the center */
-    grid-template-rows: auto 540px;
-    align-content: end;
-  }
   .mttr {
     grid-column: 1/3;
     grid-row: 1;
@@ -218,11 +214,8 @@
                         .data(topUtilizationGroup);
       gauge.enter().append('svg')
           .attr('width', width).attr('height', '90%')
-
-          .merge(gauge)
           .each(function(d, i){
             const container = d3.select(this);
-            container.selectAll("*").remove();
 
             // Utilization value
             container.append('text')
@@ -242,28 +235,14 @@
             const arc = d3.arc()
               .innerRadius(130)
               .outerRadius(150)
-              // .startAngle(2*Math.PI)
+              .startAngle(2*Math.PI* (1-d.value/100))
               .endAngle(2*Math.PI);
             container.append('path')
-              .datum({ startAngle: 2*Math.PI })
-              .attr('d', arc)
+              .attr('d', arc())
               .attr('stroke', 'none')
-              .attr('fill', '#6454CE') //#0090C1
+              .attr('fill', '#0090C1')
               .attr('stroke-width', 2)
-              .attr('transform', `translate(${width*0.5}, 200)`)
-              .transition()
-                .duration(700)
-                .attrTween("d", arcTween( 2*Math.PI* (1-d.value/100)));
-
-            function arcTween(newAngle) {
-              return function(d) {
-                var interpolate = d3.interpolate(d.startAngle, newAngle);
-                return function(t) {
-                  d.startAngle = interpolate(t);
-                  return arc(d);
-                };
-              };
-            }
+              .attr('transform', `translate(${width*0.5}, 200)`);
           });
 
         gauge.exit().remove();
