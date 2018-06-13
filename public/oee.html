@@ -1,70 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Maintainance</title>
+  <title>KPI</title>
   <meta charset="UTF-8">
   <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
-        integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
   <link rel="stylesheet" type="text/css" href="css/dc.css"/>
   <link rel="stylesheet" type="text/css" href="css/micr-layout.css"/>
   <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
   <style>
-  .mttr {
-    grid-column: 1/3;
-    grid-row: 1;
-    border-right: solid 1px #999999;
+  .container-grid {
+    grid-template-rows: 1fr 1fr 400px;
   }
-  .mtbf {
-    grid-column: 3/5;
-    grid-row: 1;
-  }
-  .top-utils {
-    grid-column: 1/5;
-    grid-row: 2;
-    border-top: solid 1px #999999;
-    width: 100%; height: 100%;
-  }
-  .top-util-gauge text{
-    fill: white;
-    font-size: 25px;
-  }
+  .oee-gauge { grid-area: 1/1/span 2/span 2 }
+  .ava-gauge { grid-area: 1/3/span 1/span 1 }
+  .ava-trend { grid-area: 2/3/span 1/span 1 }
+  .per-gauge { grid-area: 1/4/span 1/span 1 }
+  .per-trend { grid-area: 2/4/span 1/span 1 }
+  .qua-gauge { grid-area: 1/5/span 1/span 1 }
+  .qua-trend { grid-area: 2/5/span 1/span 1 }
+  .oee-chart { grid-area: 3/1/span 1/span 2 }
+  .att-chart { grid-area: 3/3/span 1/span 3 }
+
   /* dc-chart */
   .dc-chart .axis text {
     fill: white;
     font-size:20px;
   }
-
   .dc-chart .y-axis-label,
   .dc-chart .x-axis-label {
     fill: white;
     font-size:25px;
     font-weight: bold;
   }
-
   .dc-chart .axis path, .dc-chart .axis line {
     stroke: #999;
   }
-
   </style>
 </head>
 <body>
   <div class="container">
     <div class="title">
-      <h1> Maintainance
+      <h1> KPI
         <button class="datefilter-btn"></button>
       </h1>
       <hr>
     </div>
     <div class="container-grid">
-      <div class="mttr">
-        <div id="mttr-chart"></div>
+      <div class="oee-gauge">
+        <div class="panel-title">OEE</div>
       </div>
-      <div class="mtbf">
-          <div id="mtbf-chart"></div>
+      <div class="ava-gauge">
+        <div class="panel-title">Availability</div>
       </div>
-      <div class="top-utils">
-        <div class="panel-title">Top 5 Utilization Machine</div>
+      <div class="ava-trend"></div>
+      <div class="per-gauge">
+        <div class="panel-title">Performance</div>
+      </div>
+      <div class="per-trend"></div>
+      <div class="qua-gauge">
+        <div class="panel-title">Quality</div>
+      </div>
+      <div class="qua-trend"></div>
+      <div class="oee-chart"></div>
+      <div class="att-chart">
+        <div class="panel-title">Attainment Trend</div>
       </div>
     </div>
   </div>
@@ -85,168 +85,23 @@
     // $.utils.urlParam('from');
 
     // Get the first date of current month
-    const current = new Date(), year = current.getFullYear(), month = current.getMonth();
-    const currentStr = moment(new Date(year, month, 1))
+    const current = new Date(),
+      year = current.getFullYear(),
+      month = current.getMonth(),
+      day = current.getDate();
+    const currentStr = moment(new Date(year, month, day))
                       .format('YYYY-MM-DD HH:mm:ss');
 
     const datefilter = new DateFilter({
       current: current, // Set today date
       button: $('.title button'), // Button to open the filter
-      level: 'month', // 'month' or 'day'
+      level: 'day', // 'month' or 'day'
       onDataChange: (date) => {
-        // date is string
-        // E.g: '2018-06-01 00:00:00' for month selection (first day of the month)
-        //      '2018-07-28 00:00:00' for date selection
-        // Update charts
-        monthDim1.filterAll(); // Remove filters
-        monthDim1.filter(date); // Filter by current month
-        renderPlots(maintenance);
-
-        // Update gauges
-        monthDim2.filterAll(); // Remove filters
-        monthDim2.filter(date); // Filter by current month
-        drawGauges(utilization);
+        console.log(date);
       }
-    })
-
-    // Charts declaration
-    const mttrChart = dc.barChart('#mttr-chart');
-    const mtbfChart = dc.barChart('#mtbf-chart');
-    let maintenance, utilization;
-    let monthDim1, monthDim2; // 1: for maintenance, 2: utilization
-
-    // Read MTTR and MTBF data
-    d3.csv('data/machine_maintenance_per_month.csv')
-    .then((csv_data) => {
-      maintenance = crossfilter(csv_data);
-      monthDim1 = maintenance.dimension(d => d.start_calculation_time);
-      monthDim1.filter(currentStr); // Filter by current month
-
-      renderPlots(maintenance);
     });
 
-    // Draw charts
-    const renderPlots = (data) => {
-      const machineGroupDim = data.dimension(d => d.machine_group);
-      const mttrGroup = machineGroupDim.group().reduceSum(d => +d.mttr); // Not really sum as each machine group appear only one
-      const mtbfGroup = machineGroupDim.group().reduceSum(d => +d.mtbf);
 
-      mttrChart
-        .width(950).height(450)
-        .margins({top: 70, right: 40, bottom: 160, left: 120})
-        .colors(d3.scaleOrdinal().range(['#0090C1']))
-        .x(d3.scaleBand())
-        .xUnits(dc.units.ordinal)
-        .elasticX(true)
-        .brushOn(false)
-        .yAxisLabel('MTTR (min)')
-        .dimension(machineGroupDim)
-        .group(mttrGroup)
-        .gap(10)
-        .on('pretransition', (chart) => {
-          // Rotate x label
-          chart.selectAll('g.axis.x g.tick text')
-            .attr('transform', 'rotate(-30)')
-            .attr('text-anchor', 'end');
-
-            // Highlight
-            chart.selectAll('rect').on('click', function(d) {
-              mttrChart.filter(d.data.key);
-              mtbfChart.filter(d.data.key);
-            });
-        })
-        .on('renderlet', (chart) => {
-          // Move the y label of chart to top of axis
-          chart.select('.y-axis-label.y-label')
-            .attr('transform', 'translate(100,30),rotate(0)');
-        });
-
-      mtbfChart
-        .width(950).height(450)
-        .margins({top: 70, right: 40, bottom: 160, left: 120})
-        .colors(d3.scaleOrdinal().range(['#0090C1']))
-        .x(d3.scaleBand())
-        .xUnits(dc.units.ordinal)
-        .elasticX(true)
-        .brushOn(false)
-        .yAxisLabel('MTBF (min)')
-        .dimension(machineGroupDim)
-        .group(mtbfGroup)
-        .gap(10)
-        .on('pretransition', (chart) => {
-          // Rotate x label
-          chart.selectAll('g.axis.x g.tick text')
-            .attr('transform', 'rotate(-30)')
-            .attr('text-anchor', 'end');
-
-            // Highlight
-            chart.selectAll('rect').on('click', function(d) {
-              mttrChart.filter(d.data.key);
-              mtbfChart.filter(d.data.key);
-            });
-        })
-        .on('renderlet', (chart) => {
-          // Move the y label of chart to top of axis
-          chart.select('.y-axis-label.y-label')
-            .attr('transform', 'translate(100,30),rotate(0)');
-        });
-      dc.renderAll();
-    };
-
-    // Read ultilization data
-    d3.csv('data/machine_utilization_per_month.csv')
-    .then((csv_data) => {
-      utilization = crossfilter(csv_data);
-      monthDim2 = utilization.dimension(d => d.start_calculation_time);
-      monthDim2.filter(currentStr); // Filter by current month
-
-      drawGauges(utilization);
-    });
-
-    const drawGauges = (data, redraw) => {
-      const machineDim = data.dimension(d => d.machine_name);
-      const utilizationGroup = machineDim.group().reduceSum(d => +d.utilization_rate); // Not really sum as each machine group appear only one
-      const topUtilizationGroup = utilizationGroup.top(5);
-
-      const width = 384;
-      const gauge = d3.select('.top-utils')
-                      .selectAll('svg')
-                        .data(topUtilizationGroup);
-      gauge.enter().append('svg')
-          .attr('width', width).attr('height', '90%')
-          .each(function(d, i){
-            const container = d3.select(this);
-
-            // Utilization value
-            container.append('text')
-              .attr('fill', 'white')
-              .attr('font-size', 50)
-              .attr('text-anchor', 'middle')
-              .attr('transform', `translate(${width*0.5}, 200)`)
-              .text(d.value+'%');
-            // Machine name
-            container.append('text')
-              .attr('fill', 'white')
-              .attr('font-size', 18)
-              .attr('text-anchor', 'middle')
-              .attr('transform', `translate(${width*0.5}, 250)`)
-              .text(d.key);
-            // Gauge
-            const arc = d3.arc()
-              .innerRadius(130)
-              .outerRadius(150)
-              .startAngle(2*Math.PI* (1-d.value/100))
-              .endAngle(2*Math.PI);
-            container.append('path')
-              .attr('d', arc())
-              .attr('stroke', 'none')
-              .attr('fill', '#0090C1')
-              .attr('stroke-width', 2)
-              .attr('transform', `translate(${width*0.5}, 200)`);
-          });
-
-        gauge.exit().remove();
-    }
   });
 </script>
 

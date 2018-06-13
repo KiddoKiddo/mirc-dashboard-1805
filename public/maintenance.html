@@ -89,7 +89,9 @@
     // $.utils.urlParam('from');
 
     // Get the first date of current month
-    const current = new Date(), year = current.getFullYear(), month = current.getMonth();
+    const current = new Date(),
+            year = current.getFullYear(),
+            month = current.getMonth();
     const currentStr = moment(new Date(year, month, 1))
                       .format('YYYY-MM-DD HH:mm:ss');
 
@@ -247,14 +249,13 @@
             container.append('path')
               .datum({ startAngle: 2*Math.PI })
               .attr('d', arc)
-              .attr('stroke', 'none')
-              .attr('fill', '#6454CE') //#0090C1
-              .attr('stroke-width', 2)
-              .attr('transform', `translate(${width*0.5}, 200)`)
+                .attr('stroke', 'none')
+                .attr('fill', '#6454CE') //#0090C1
+                .attr('stroke-width', 2)
+                .attr('transform', `translate(${width*0.5}, 200)`)
               .transition()
                 .duration(700)
                 .attrTween("d", arcTween( 2*Math.PI* (1-d.value/100)));
-
             function arcTween(newAngle) {
               return function(d) {
                 var interpolate = d3.interpolate(d.startAngle, newAngle);
