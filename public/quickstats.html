@@ -4,6 +4,7 @@
   <title>Quick Stats</title>
   <meta charset="UTF-8">
   <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
   <link rel="stylesheet" type="text/css" href="css/dc.css"/>
   <link rel="stylesheet" type="text/css" href="css/micr-layout.css"/>
   <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
@@ -15,32 +16,18 @@
 	  .order-1, .output-1, .gauge-1 {
 		grid-row: 1;
 		font-size: 50px;
+		
 	  }
+	  .gauge-1 {
+		border-right: solid 1px #999999;
+		}
 	  .order-2, .output-2, .gauge-2 {
-		grid-row: 2;
+		grid-row: 1;
 		font-size: 50px;
 	  }
-	  .trend {
-		grid-row: 3;
-		grid-column: 1 / 4;
-		border-top: solid 1px #999999;
-		width: 100%; height: 100%;
+	  .order-1, .order-2, .output-1, .output-2{
+		margin-left: 0.5em;
 	  }
-	  /* dc-chart */
-	  .dc-chart .axis text {
-		fill: white;
-		font-size:20px;
-	  }
-	  .dc-chart .y-axis-label,
-	  .dc-chart .x-axis-label {
-		fill: white;
-		font-size:25px;
-		font-weight: bold;
-	  }
-	  .dc-chart .axis path, .dc-chart .axis line {
-		stroke: #999;
-	  }
-	  
 	  .container-grid {
 		font-size: 25px;
 	  }
@@ -49,7 +36,35 @@
 		font-size: 80px;
 		font-weight: bold;
 	  }		
+	  .trend {
+		grid-row: 2;
+		grid-column: 2/5;
+		width: 100%; height: 100%;
+	  }
+	  /* dc-chart */
+	  .dc-chart .axis text {
+		fill: white;
+		font-size:20px;
+	  }
+	  .dc-chart .y-axis-label,
+	  .dc-chart .x-axis-label, 
+	  .dc-legend-item{
+		fill: white;
+		font-size:25px;
+		font-weight: bold;
+	  }
+	  .dc-chart .axis path, .dc-chart .axis line {
+		stroke: #999;
+	  }
+	  .dc-chart .pie-slice.external {
+		fill: white;
+		font-size: 20px;
+	  }
+	  #trend-chart svg{
+		width:1200px;
+	  }
   </style>
+  
 </head>
 <body>
   <div class="container">
@@ -61,16 +76,29 @@
       <hr>
     </div>
     <div class="container-grid">
-      <div class="order-1"><div class="number" id="order1">31</div> Orders</div>
-      <div class="output-1"><div class="number" id="output1">31</div> Outputs</div>
-      <div class="gauge-1"></div>
-      <div class="order-2"><div class="number" id="order2">31</div> Orders</div>
-      <div class="output-2"><div class="number" id="output2">31</div> Outputs</div>
-      <div class="gauge-2"></div>
+      <div class="order-1"><div class="number" id="order1"></div> Orders</div>
+      <div class="output-1"><div class="number" id="output1"></div> Outputs</div>
+      <div class="gauge-1" ><div id="gauge-today"></div></div>
+      <div class="order-2"><div class="number" id="order2"></div> Orders</div>
+      <div class="output-2"><div class="number" id="output2"></div> Outputs</div>
+      <div class="gauge-2"><div id="gauge-ytd"></div></div>
       <div class="trend">
         <div id="trend-chart"></div>
       </div>
     </div>
+	<svg><defs>
+		<marker
+		  id="arrow"
+		  markerUnits="strokeWidth"
+		  markerWidth="12"
+		  markerHeight="12"
+		  viewBox="0 0 12 12"
+		  refX="6"
+		  refY="6"
+		  orient="auto">
+		  <path d="M2,2 L10,6 L2,10 L6,6 L2,2" style="fill: #17202a;"></path>
+		</marker>
+	</defs></svg>
   </div>
   <script type="text/javascript" src="js/d3/d3.min.js"></script>
   <script type="text/javascript" src="js/crossfilter2/crossfilter.js"></script>
@@ -93,39 +121,40 @@
     const currentStr = moment(new Date(year, month, day))
                       .format('YYYY-MM-DD HH:mm:ss');
 	
-	//Declare the Min and Max in the range 
+	//Declare the Min and Max in the range (Initial)
 	const current1 = new Date(currentStr); const current2 = new Date(currentStr);
 	const rangeMin = moment(current1.setDate(current1.getDate()-6.5)).format('YYYY-MM-DD HH:mm:ss');
 	const rangeMax = moment(current2.setDate(current2.getDate()+0.5)).format('YYYY-MM-DD HH:mm:ss');
 	
 	const datefilter = new DateFilter({
-	current: current, // Set today date
-	button: $('.title button'), // Button to open the filter
-	level: 'day', // 'month' or 'day'
-	onDataChange: (date) => {
-		// date is string
-		// E.g: '2018-06-01 00:00:00' for month selection (first day of the month)
-		//      '2018-07-28 00:00:00' for date selection
-		// Update charts
-		const dateNum = new Date(date); const dateNum1 = new Date(date);	
-		const updateMin = moment(dateNum.setDate(dateNum.getDate()-6.5)).format('YYYY-MM-DD HH:mm:ss');		
-		const updateMax = moment(dateNum1.setDate(dateNum1.getDate()+0.5)).format('YYYY-MM-DD HH:mm:ss');
-		
-		weekDim.filterAll(); // Remove filters
-		weekDim.filterRange([new Date(updateMin), new Date(updateMax)]);
-		domainMax = new Date(updateMax);
-		domainMin = new Date(updateMin);
-		
-		renderPlots(trend);
-
-	  }
-    })
+		current: current, // Set today date
+		button: $('.title button'), // Button to open the filter
+		level: 'day', // 'month' or 'day'
+		onDataChange: (date) => {
+			// date is string
+			// E.g: '2018-06-01 00:00:00' for month selection (first day of the month)
+			//      '2018-07-28 00:00:00' for date selection
+			// Update charts
+			const dateNum = new Date(date); const dateNum1 = new Date(date);	
+			const updateMin = moment(dateNum.setDate(dateNum.getDate()-6.5)).format('YYYY-MM-DD HH:mm:ss');		
+			const updateMax = moment(dateNum1.setDate(dateNum1.getDate()+0.5)).format('YYYY-MM-DD HH:mm:ss');
+			
+			weekDim.filterAll(); // Remove filters
+			weekDim.filterRange([new Date(updateMin), new Date(updateMax)]);
+			domainMax = new Date(updateMax);
+			domainMin = new Date(updateMin);
+			
+			renderPlots(trend);
+		}
+    })	
 
     // Chart declaration
     const trendChart = dc.compositeChart('#trend-chart');
+	const gauge1 = dc.pieChart('#gauge-today');
+	const gauge2 = dc.pieChart('#gauge-ytd');
 	let trend;
 	let weekDim;
-	let domainMax, domainMin;
+	let domainMax, domainMin;	
 	
    // Read throughput data
      d3.csv('data/throughput_per_date_2.csv')
@@ -137,8 +166,7 @@
 		domainMin = new Date(rangeMin);
 		
 		renderPlots(trend);
-	});
-	
+	});	
    
    //Draw charts
    const renderPlots = (data) => {
@@ -146,8 +174,46 @@
 		const throughputGroup = dateDim.group().reduceSum(d => +d.throughput);
 		const ordersGroup = dateDim.group().reduceSum(d => +d.orders);
 		
+		//To fix the size of Pie Chart slices
+		const fakeData = [{"part_name":"slice1", "size":1},{"part_name":"slice2", "size":1},{"part_name":"slice3", "size":1},{"part_name":"slice4", "size":1},
+						  {"part_name":"slice5", "size":1},{"part_name":"slice6", "size":1},{"part_name":"slice7", "size":1},{"part_name":"slice8", "size":1},
+						  {"part_name":"slice9", "size":1},{"part_name":"slice10", "size":1},{"part_name":"slice11", "size":1},{"part_name":"slice12", "size":1}]; 
+		const ndx = crossfilter(fakeData);
+		const sliceDim = ndx.dimension(d => d.part_name);
+		const sliceDimGroup = sliceDim.group().reduceSum(d => d.size);
+		
+		function setXY(outputVal, orderVal, arrowLength){
+			ratioVal = outputVal-orderVal; 
+			if(ratioVal >= 0)
+				angleVal = (1/3)*Math.PI;
+			else if(ratioVal >= -10)
+				angleVal = 0;
+			else
+				angleVal = (5/3)*Math.PI;
+			
+			//Calculate the arrow position
+			if(angleVal<=0.5*Math.PI){
+				adjVal = arrowLength*Math.cos(0.5*Math.PI-angleVal);
+				oppVal = -Math.sqrt((Math.pow(arrowLength,2)-Math.pow(adjVal,2)));
+			}
+			else if(angleVal<=Math.PI){
+				adjVal = arrowLength*Math.cos(angleVal-0.5*Math.PI);
+				oppVal = Math.sqrt((Math.pow(arrowLength,2)-Math.pow(adjVal,2)));
+			}
+			else if(angleVal<=1.5*Math.PI){
+				adjVal = -arrowLength*Math.cos(1.5*Math.PI-angleVal);
+				oppVal = Math.sqrt((Math.pow(arrowLength,2)-Math.pow(adjVal,2)));
+			}
+			else{
+				adjVal = -arrowLength*Math.cos(angleVal-1.5*Math.PI);
+				oppVal = -Math.sqrt((Math.pow(arrowLength,2)-Math.pow(adjVal,2)));
+			}
+			return{x2:adjVal, y2:oppVal};
+		}
+			
+			//Bar Chart & Line Chart
 			trendChart
-				.width(950).height(450)
+				.width(1000).height(500)
 				.margins({top: 70, right: 40, bottom: 160, left: 120})
 				.x(d3.scaleTime().domain([domainMin, domainMax]))
 				.xUnits(d3.timeDays)
@@ -156,6 +222,7 @@
 				.brushOn(false)
 				.mouseZoomable(false)
 				.yAxisLabel('Throughput')
+				.legend(dc.legend().x(1000).y(25).itemHeight(35).gap(35).legendText(function(d){return d.key;}))
 				.on('pretransition', (chart) => {
 					// Rotate x label
 					chart.selectAll('g.axis.x g.tick text')
@@ -166,6 +233,24 @@
 					chart.selectAll('rect').on('click', function(d) {
 					  trendChart.filter(d.data.key);
 					});	
+					
+					chart.select('g.dc-legend')
+						.append("text")
+						.attr("text-anchor", "middle")
+						.attr("fill", "white")
+						.attr("font-size", "25px")
+						.attr("dx", "100")
+						.attr("dy", "25")
+						.text("Outputs")
+						
+					chart.select('g.dc-legend')
+						.append("text")
+						.attr("text-anchor", "middle")
+						.attr("fill", "white")
+						.attr("font-size", "25px")
+						.attr("dx", "100")
+						.attr("dy", "95")
+						.text("Orders")
 				})			
 				.on('renderlet', (chart) => {
 					// Move the y label of chart to top of axis
@@ -174,65 +259,129 @@
 				})
 				.compose([
 					dc.barChart(trendChart)
-						.colors(d3.scaleOrdinal().range(['#0090C1']))	
+						.colors(d3.scaleOrdinal().range(['#7d3c98']))	
 						.dimension(dateDim) 
 						.group(throughputGroup)
-						.gap(80)
+						.gap(80)	
 						.centerBar(true),
 					
 					dc.lineChart(trendChart)
 						.curve(d3.curveLinear)
-						.dimension(weekDim)
+						.dimension(dateDim)
 						.group(ordersGroup)
 						.renderArea(false)
-						.renderDataPoints(true)
+						.renderDataPoints({fillOpacity:5.0, strokeOpacity: 5.0, radius: 2})
 						.clipPadding(10)
 				])
-				
-		dc.renderAll();
+			trendChart.render();
 		
-	//Update displayed values
+		
+		//Update displayed values
 		let todayOutput, todayOrder, prevOutput, prevOrder;
-		
-		//Return filtered values as array, but sorted using Top
-		const outputNum = throughputGroup.top(7);
-		const orderNum = ordersGroup.top(7);
-		
-		//Declare date to compare
-		const selectDate = new Date(domainMax); const selectDate1 = new Date(domainMax);	
-		const selectDateStr = moment(selectDate.setDate(selectDate.getDate()-0.5)).format('YYYY-MM-DD HH:mm:ss');
-		const prevDateStr = moment(selectDate1.setDate(selectDate1.getDate()-1.5)).format('YYYY-MM-DD HH:mm:ss');
-		
-		//Use For Loop to assign order and throughput values 
-		for (n=0; n<7; n++){
-		
-			if (moment(new Date(outputNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == selectDateStr){
-				todayOutput = JSON.stringify(outputNum[n].value);
-			}	
-			if (moment(new Date(orderNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == selectDateStr){
-				todayOrder = JSON.stringify(orderNum[n].value);
-			}
-			if (moment(new Date(outputNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == prevDateStr){
-				prevOutput = JSON.stringify(outputNum[n].value);
-			}
-			if (moment(new Date(orderNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == prevDateStr){
-				prevOrder = JSON.stringify(orderNum[n].value);
-			}
 	
-		}
-		
-		const currentOrder = document.getElementById('order1');
-		currentOrder.innerHTML = todayOrder;
+			//Return filtered values as array, but sorted using Top
+			const outputNum = throughputGroup.top(7);
+			const orderNum = ordersGroup.top(7);
+			
+			//Declare date to compare
+			const selectDate = new Date(domainMax); const selectDate1 = new Date(domainMax);	
+			const selectDateStr = moment(selectDate.setDate(selectDate.getDate()-0.5)).format('YYYY-MM-DD HH:mm:ss');
+			const prevDateStr = moment(selectDate1.setDate(selectDate1.getDate()-1.5)).format('YYYY-MM-DD HH:mm:ss');
+			
+			//Use For Loop to assign order and throughput values 
+			for (n=0; n<7; n++){			
+				if (moment(new Date(outputNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == selectDateStr)
+					todayOutput = JSON.stringify(outputNum[n].value);
+				if (moment(new Date(orderNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == selectDateStr)
+					todayOrder = JSON.stringify(orderNum[n].value);
+				if (moment(new Date(outputNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == prevDateStr)
+					prevOutput = JSON.stringify(outputNum[n].value);
+				if (moment(new Date(orderNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == prevDateStr)
+					prevOrder = JSON.stringify(orderNum[n].value);			
+			}
+			
+			const currentOrder = document.getElementById('order1');
+				currentOrder.innerHTML = todayOrder;
+			const currentOutput = document.getElementById('output1');
+				currentOutput.innerHTML = todayOutput;	
+			const previousOrder = document.getElementById('order2');
+				previousOrder.innerHTML = prevOrder;	
+			const previousOutput = document.getElementById('output2');
+				previousOutput.innerHTML = prevOutput;			
+			
+			const today = setXY(todayOutput, todayOrder, 120);
+			const yesterday = setXY(prevOutput, prevOrder, 120);
+			
+			//Gauge1 and Gauge2
+			gauge1
+				.colors(d3.scaleOrdinal().range(['#f7dc6f','#27ae60','#27ae60','#303030','#303030','#303030','#303030','#303030','#303030','#cb4335','#cb4335','#f7dc6f']))
+				.width(600).height(350)
+				.slicesCap(12)
+				.cx(300)
+				.cy(250)
+				.innerRadius(10)
+				.externalLabels(5)
+				.dimension(sliceDim)
+				.group(sliceDimGroup)	
+				.on('pretransition', function(gauge1) {
+					gauge1.selectAll('text.pie-slice').text(function(d) {
+						<!-- return d.data.key; -->
+					});
+					gauge1.select('g')
+						.append("text")
+						.attr("text-anchor", "middle")
+						.attr("fill", "white")
+						.attr("font-size", "25px")
+						.attr("dy", "50")
+						.text(moment(new Date(selectDateStr)).format("YYYY-MM-DD"));		
+					gauge1.select('g')
+						.append("line")
+						.attr("x1",0)  
+						.attr("y1",0)  
+						.attr("x2",today.x2)  
+						.attr("y2",today.y2)  
+						.attr("stroke","#17201a")  
+						.attr("stroke-width",5)  
+						.attr("marker-end","url(#arrow)");
+				});		
+			gauge1.filter = function(){}; //Disable selection
+			gauge1.render();
 
-		const currentOutput = document.getElementById('output1');
-		currentOutput.innerHTML = todayOutput;
-		
-		const previousOrder = document.getElementById('order2');
-		previousOrder.innerHTML = prevOrder;
-		
-		const previousOutput = document.getElementById('output2');
-		previousOutput.innerHTML = prevOutput;
-		};
+			gauge2
+				.colors(d3.scaleOrdinal().range(['#f7dc6f','#27ae60','#27ae60','#303030','#303030','#303030','#303030','#303030','#303030','#cb4335','#cb4335','#f7dc6f']))				
+				.width(600).height(350)
+				.slicesCap(12)
+				.cx(300)
+				.cy(250)
+				.innerRadius(10)
+				.externalLabels(5)
+				.dimension(sliceDim)
+				.group(sliceDimGroup)			
+				.on('pretransition', function(gauge2) {
+					gauge2.selectAll('text.pie-slice').text(function(d) {
+						<!-- return d.data.key; -->
+					})		
+					gauge2.select('g')
+						.append("text")
+						.attr("text-anchor", "middle")
+						.attr("fill", "white")
+						.attr("font-size", "25px")
+						.attr("dy", "50")
+						.text(moment(new Date(prevDateStr)).format("YYYY-MM-DD"))
+					gauge2.select('g')
+						.append("line")
+						.attr("x1",0)  
+						.attr("y1",0)  
+						.attr("x2",yesterday.x2)  
+						.attr("y2",yesterday.y2)  
+						.attr("stroke","#17202a")  
+						.attr("stroke-width",5)  
+						.attr("marker-end","url(#arrow)");
+					});
+			gauge2.filter = function(){}; //Disable selection
+			gauge2.render();
+			
+	};//End Draw charts
 });
 	
 </script>
