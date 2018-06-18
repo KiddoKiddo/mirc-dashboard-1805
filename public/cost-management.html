@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Cost Management</title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="css/dc.css"/>
+  <link rel="stylesheet" type="text/css" href="css/micr-layout.css"/>
+  <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
+  <style>
+  .container-grid { }
+
+  #roa { grid-area: 1/1/span 1/span 1; }
+  #asset-turnover { grid-area: 1/2/span 1/span 1; }
+  #maintenance-costs { grid-area: 2/1/span 1/span 1; }
+  #unit-costs { grid-area: 2/2/span 1/span 1; }
+
+  /* dc-chart */
+  .dc-chart .axis text {
+    fill: white;
+    font-size:20px;
+  }
+  .dc-chart .y-axis-label,
+  .dc-chart .x-axis-label {
+    fill: white;
+    font-size:25px;
+    font-weight: bold;
+  }
+  #maintenance-costs .dc-chart .chart-body path.line {
+    stroke-width: 5px;
+  }
+  .dc-chart .axis path, .dc-chart .axis line {
+    stroke: #999;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">
+      <h1>Cost Management</h1>
+      <hr>
+    </div>
+    <div class="container-grid">
+      <div id="roa">
+        <div class="panel-title">Return On Assets (%)</div>
+        <div id="roa-chart"></div>
+      </div>
+      <div id="asset-turnover">
+        <div class="panel-title">Asset Turnover</div>
+        <div id="asset-turnover-chart"></div>
+      </div>
+      <div id="maintenance-costs">
+        <div class="panel-title">Maintenance Costs</div>
+        <div id="maintenance-costs-chart"></div>
+      </div>
+      <div id="unit-costs">
+        <div class="panel-title">Unit Costs With Target</div>
+        <div id="unit-costs-chart"></div>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="js/d3/d3.min.js"></script>
+  <script type="text/javascript" src="js/crossfilter2/crossfilter.js"></script>
+  <script type="text/javascript" src="js/dcjs/dc.min.js"></script>
+
+  <script type="text/javascript" src="js/jquery/jquery-3.3.1.min.js"></script>
+  <script type="text/javascript" src="js/moment/moment.js"></script>
+  <script type="text/javascript" src="js/animejs/anime.min.js"></script>
+
+  <script type="text/javascript" src="js/datefilter/datefilter.js"></script>
+
+  <script type="text/javascript">
+  $(() => {
+    // Declarations
+    const roaChart = dc.barChart("#roa-chart");
+    const assetTurnoverChart = dc.barChart("#asset-turnover-chart");
+    const mainCostsChart = dc.lineChart("#maintenance-costs-chart");
+    const unitCostsChart = dc.barChart("#unit-costs-chart");
+
+    const range = [new Date('2017-09-01 00:00:00'), new Date('2018-08-01 00:00:00')];
+
+    // Read data
+    let ndx, timeDim, timeDim1, timeDim2, timeDim3;
+    d3.csv('data/cost_management_2.csv').then((csv_data) => {
+      ndx = crossfilter(csv_data);
+      timeDim = ndx.dimension(d => new Date(d.updated_date));
+      timeDim1 = ndx.dimension(d => new Date(d.updated_date));
+      timeDim2 = ndx.dimension(d => new Date(d.updated_date));
+      timeDim3 = ndx.dimension(d => new Date(d.updated_date));
+
+      renderCharts();
+    });
+
+    function renderCharts() {
+      roaChart.width(960).height(400)
+        .margins({top: 30, right: 40, bottom: 80, left: 120})
+        .colors(d3.scaleOrdinal().range(['#0090C1']))
+        .x(d3.scaleTime().domain(range))
+        .xUnits(d3.timeMonths)
+        .elasticX(true)
+        .xAxisPadding(10)
+        .brushOn(true)
+        .centerBar(true)
+        .gap(30)
+        .dimension(timeDim)
+        .group(timeDim.group().reduceSum(d => +d.roa))
+        .on('pretransition', (chart) => {
+          // Rotate x label
+          chart.selectAll('g.axis.x g.tick text')
+            .attr('transform', 'rotate(-30)')
+            .attr('text-anchor', 'end');
+        })
+        .on('renderlet', (chart) => {});
+      roaChart.xAxis().tickFormat(d => moment(d).format('MMM YYYY'));
+
+      assetTurnoverChart.width(960).height(400)
+        .margins({top: 30, right: 40, bottom: 80, left: 120})
+        .colors(d3.scaleOrdinal().range(['#1D6348']))
+        .x(d3.scaleTime().domain(range))
+        .xUnits(d3.timeMonths)
+        .elasticX(true)
+        .xAxisPadding(10)
+        .brushOn(true)
+        .centerBar(true)
+        .gap(30)
+        .dimension(timeDim1)
+        .group(timeDim1.group().reduceSum(d => +d.asset_turnover))
+        .on('pretransition', (chart) => {
+          // Rotate x label
+          chart.selectAll('g.axis.x g.tick text')
+            .attr('transform', 'rotate(-30)')
+            .attr('text-anchor', 'end');
+        })
+        .on('renderlet', (chart) => {});
+      assetTurnoverChart.xAxis().tickFormat(d => moment(d).format('MMM YYYY'));
+
+      mainCostsChart.width(960).height(400)
+        .margins({top: 30, right: 40, bottom: 80, left: 120})
+        .colors(d3.scaleOrdinal().range(['#1D6348']))
+        .x(d3.scaleTime().domain(range))
+        .xUnits(d3.timeMonths)
+        .elasticX(true)
+        .dimension(timeDim2)
+        .group(timeDim2.group().reduceSum(d => +d.maintenance_cost))
+        .on('pretransition', (chart) => {
+          // Rotate x label
+          chart.selectAll('g.axis.x g.tick text')
+            .attr('transform', 'rotate(-30)')
+            .attr('text-anchor', 'end');
+        })
+        .on('renderlet', (chart) => {});
+      mainCostsChart.xAxis().tickFormat(d => moment(d).format('MMM YYYY'));
+
+      unitCostsChart.width(960).height(400)
+        .margins({top: 30, right: 40, bottom: 80, left: 120})
+        .colors(d3.scaleOrdinal().range(['#6454CE']))
+        .x(d3.scaleTime().domain(range))
+        .xUnits(d3.timeMonths)
+        .elasticX(true)
+        .xAxisPadding(10)
+        .y(d3.scaleLinear().domain([400, 550]))
+        .brushOn(true)
+        .centerBar(true)
+        .gap(30)
+        .dimension(timeDim3)
+        .group(timeDim3.group().reduceSum(d => +d.unit_cost))
+        .on('filtered', function(chart, filter){
+          roaChart.focus(filter);
+          assetTurnoverChart.focus(filter);
+          mainCostsChart.focus(filter);
+        })
+        .on('pretransition', (chart) => {
+          // Rotate x label
+          chart.selectAll('g.axis.x g.tick text')
+            .attr('transform', 'rotate(-30)')
+            .attr('text-anchor', 'end');
+
+            // Highlight
+            // chart.selectAll('rect').on('click', function(d) {
+            //   console.log(d);
+            //   // roaChart.filter([new Date(d.data.key), new Date(d.data.key)]);
+            //   // assetTurnoverChart.filter(new Date(d.data.key));
+            //   // mainCostsChart.filter(dc.filters.RangedFilter(d.data.key, d.data.key));
+            //   // unitCostsChart.filter(dc.filters.RangedFilter(d.data.key, d.data.key));
+            //
+            //   dc.redrawAll();
+            // });
+
+            // Extra line
+            const left_y = 470, right_y = 470; // use real statistics here!
+            const extra_data = [{x: chart.x().range()[0], y: chart.y()(left_y)}, {x: chart.x().range()[1], y: chart.y()(right_y)}];
+            const line = d3.line()
+                .x(function(d) { return d.x; })
+                .y(function(d) { return d.y; })
+                .curve(d3.curveLinear);
+            const chartBody = chart.select('g.chart-body');
+            let path = chartBody.selectAll('path.extra').data([extra_data]);
+            path = path
+                .enter()
+                    .append('path')
+                    .attr('class', 'extra')
+                    .attr('stroke', '#880000')
+                    .attr('stroke-width',  3)
+                    .attr('id', 'extra-line')
+                .merge(path);
+            path.attr('d', line);
+        })
+        .on('renderlet', (chart) => {});
+      unitCostsChart.xAxis().tickFormat(d => moment(d).format('MMM YYYY'));
+
+      dc.renderAll();
+    }
+  });
+</script>
+
+</body>
+</html>

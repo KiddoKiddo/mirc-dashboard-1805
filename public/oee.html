@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>KPI</title>
+  <title>OEE</title>
   <meta charset="UTF-8">
   <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
@@ -22,6 +22,10 @@
 
   #oee-trend { grid-area: 3/1/span 1/span 2 }
   .att-chart { grid-area: 3/3/span 1/span 3 }
+
+  #ava-trend, #per-trend, #qua-trend {
+    align-self: start;
+  }
 
   .oee-gauge, .ava-gauge, .per-gauge, .qua-gauge {
     display: flex;
@@ -53,7 +57,7 @@
 <body>
   <div class="container">
     <div class="title">
-      <h1> KPI
+      <h1> OEE
         <button class="datefilter-btn"></button>
       </h1>
       <hr>
@@ -163,7 +167,7 @@
 
     function renderAttainment(range) {
       attChart.width(1100).height(450)
-        .margins({top: 70, right: 40, bottom: 160, left: 120})
+        .margins({top: 30, right: 40, bottom: 160, left: 120})
         .colors(d3.scaleOrdinal().range(['#1D6348']))
         .x(d3.scaleTime().domain(range))
         .xUnits(d3.timeDays)
@@ -256,8 +260,8 @@
         subTitleColor: 'white',
       }, options);
 
-      const width = opts.width || 350;
-      const height = opts.height || 350;
+      const width = opts.width || 300;
+      const height = opts.height || 300;
       const outerRadius = opts.outerRadius || 0.8 * (width > height? width : height)/2;
       const innerRadius = opts.innerRadius || 0.8 * outerRadius;
 
