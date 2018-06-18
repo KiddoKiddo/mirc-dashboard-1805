@@ -90,8 +90,8 @@
 
     // Get the first date of current month
     const current = new Date(),
-            year = current.getFullYear(),
-            month = current.getMonth();
+      year = current.getFullYear(),
+      month = current.getMonth();
     const currentStr = moment(new Date(year, month, 1))
                       .format('YYYY-MM-DD HH:mm:ss');
 
@@ -155,16 +155,19 @@
             .attr('transform', 'rotate(-30)')
             .attr('text-anchor', 'end');
 
-            // Highlight
-            chart.selectAll('rect').on('click', function(d) {
-              mttrChart.filter(d.data.key);
-              mtbfChart.filter(d.data.key);
-            });
+          chart.select('.y-axis-label.y-label').style('visibility', 'hidden');
+
+          // Highlight
+          chart.selectAll('rect').on('click', function(d) {
+            mttrChart.filter(d.data.key);
+            mtbfChart.filter(d.data.key);
+          });
         })
         .on('renderlet', (chart) => {
           // Move the y label of chart to top of axis
           chart.select('.y-axis-label.y-label')
-            .attr('transform', 'translate(100,30),rotate(0)');
+            .attr('transform', 'translate(100,30),rotate(0)')
+            .style('visibility', 'visible');
         });
 
       mtbfChart
@@ -185,16 +188,19 @@
             .attr('transform', 'rotate(-30)')
             .attr('text-anchor', 'end');
 
-            // Highlight
-            chart.selectAll('rect').on('click', function(d) {
-              mttrChart.filter(d.data.key);
-              mtbfChart.filter(d.data.key);
-            });
+          chart.select('.y-axis-label.y-label').style('visibility', 'hidden');
+
+          // Highlight
+          chart.selectAll('rect').on('click', function(d) {
+            mttrChart.filter(d.data.key);
+            mtbfChart.filter(d.data.key);
+          });
         })
         .on('renderlet', (chart) => {
           // Move the y label of chart to top of axis
           chart.select('.y-axis-label.y-label')
-            .attr('transform', 'translate(100,30),rotate(0)');
+            .attr('transform', 'translate(100,30),rotate(0)')
+            .style('visibility', 'visible');
         });
       dc.renderAll();
     };

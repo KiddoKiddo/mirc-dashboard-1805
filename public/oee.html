@@ -14,14 +14,20 @@
   }
   .oee-gauge { grid-area: 1/1/span 2/span 2 }
   .ava-gauge { grid-area: 1/3/span 1/span 1 }
-  .ava-trend { grid-area: 2/3/span 1/span 1 }
+  #ava-trend { grid-area: 2/3/span 1/span 1 }
   .per-gauge { grid-area: 1/4/span 1/span 1 }
-  .per-trend { grid-area: 2/4/span 1/span 1 }
+  #per-trend { grid-area: 2/4/span 1/span 1 }
   .qua-gauge { grid-area: 1/5/span 1/span 1 }
-  .qua-trend { grid-area: 2/5/span 1/span 1 }
-  .oee-chart { grid-area: 3/1/span 1/span 2 }
+  #qua-trend { grid-area: 2/5/span 1/span 1 }
+
+  #oee-trend { grid-area: 3/1/span 1/span 2 }
   .att-chart { grid-area: 3/3/span 1/span 3 }
 
+  .oee-gauge, .ava-gauge, .per-gauge, .qua-gauge {
+    display: flex;
+    flex-direction: column;
+    align-items: center
+  }
   /* dc-chart */
   .dc-chart .axis text {
     fill: white;
@@ -32,6 +38,12 @@
     fill: white;
     font-size:25px;
     font-weight: bold;
+  }
+  .trend.dc-chart .axis {
+   display: none;
+  }
+  .trend.dc-chart .chart-body path.line {
+    stroke-width: 10px;
   }
   .dc-chart .axis path, .dc-chart .axis line {
     stroke: #999;
@@ -49,22 +61,28 @@
     <div class="container-grid">
       <div class="oee-gauge">
         <div class="panel-title">OEE</div>
+        <div class="gauge"></div>
       </div>
+      <div id="oee-trend" class="trend"></div>
       <div class="ava-gauge">
         <div class="panel-title">Availability</div>
+        <div class="gauge"></div>
       </div>
-      <div class="ava-trend"></div>
+      <div id="ava-trend" class="trend"></div>
       <div class="per-gauge">
         <div class="panel-title">Performance</div>
+        <div class="gauge"></div>
       </div>
-      <div class="per-trend"></div>
+      <div id="per-trend" class="trend"></div>
       <div class="qua-gauge">
         <div class="panel-title">Quality</div>
+        <div class="gauge"></div>
       </div>
-      <div class="qua-trend"></div>
-      <div class="oee-chart"></div>
+      <div id="qua-trend" class="trend"></div>
+
       <div class="att-chart">
-        <div class="panel-title">Attainment Trend</div>
+        <div class="panel-title">Attainment</div>
+        <div id="att-trend"></div>
       </div>
     </div>
   </div>
@@ -89,18 +107,206 @@
       year = current.getFullYear(),
       month = current.getMonth(),
       day = current.getDate();
-    const currentStr = moment(new Date(year, month, day))
-                      .format('YYYY-MM-DD HH:mm:ss');
+    const currentStr = moment(new Date(year, month, day)).format('YYYY-MM-DD HH:mm:ss');
+
+    function findDateRange(endDate) {
+      const range = Array(8).fill();
+      range.forEach((value, i, arr) => {
+        arr[i] = moment(endDate).add(-i + 1, 'days').toDate();
+      });
+      return [range[range.length-1], range[0]];
+    }
 
     const datefilter = new DateFilter({
       current: current, // Set today date
       button: $('.title button'), // Button to open the filter
       level: 'day', // 'month' or 'day'
-      onDataChange: (date) => {
-        console.log(date);
+      onDataChange: (dateStr) => {
+        const range = findDateRange(dateStr);
+
+        timeDim1.filterAll(); // Remove filters
+        timeDim1.filter(findDateRange(dateStr));
+        renderGauges(ndx);
+        renderCharts(ndx, range);
+
+        timeDim2.filterAll(); // Remove filters
+        timeDim2.filter(findDateRange(currentStr));
+        renderAttainment(attainment);
+
       }
     });
 
+    // Declarations
+    const oeeChart = dc.lineChart("#oee-trend");
+    const avaChart = dc.lineChart("#ava-trend");
+    const perChart = dc.lineChart("#per-trend");
+    const quaChart = dc.lineChart("#qua-trend");
+    const attChart = dc.barChart("#att-trend");
+    let ndx, timeDim1, attainment, timeDim2;
+
+    // Read data
+    d3.csv('data/kpi.csv').then((csv_data) => {
+      ndx = crossfilter(csv_data);
+      timeDim1 = ndx.dimension(d => new Date(d.updated_date));
+      const range = findDateRange(currentStr);
+      timeDim1.filter(range);
+      renderGauges(ndx);
+      renderCharts(ndx, range);
+    });
+    d3.csv('data/throughput_per_date_2.csv').then((csv_data) => {
+      attainment = crossfilter(csv_data);
+      timeDim2 = attainment.dimension(d => new Date(d.date));
+      const range = findDateRange(currentStr);
+      timeDim2.filter(range);
+      renderAttainment(range);
+    });
+
+    function renderAttainment(range) {
+      attChart.width(1100).height(450)
+        .margins({top: 70, right: 40, bottom: 160, left: 120})
+        .colors(d3.scaleOrdinal().range(['#1D6348']))
+        .x(d3.scaleTime().domain(range))
+        .xUnits(d3.timeDays)
+        .brushOn(false)
+        // .yAxisLabel('Throughput')
+        .dimension(timeDim2)
+        .group(timeDim2.group().reduceSum(d => +d.throughput))
+        .gap(10)
+        .on('pretransition', (chart) => {
+          // Rotate x label
+          chart.selectAll('g.axis.x g.tick text')
+            .attr('transform', 'rotate(-30)')
+            .attr('text-anchor', 'end');
+
+          chart.select('.y-axis-label.y-label').style('visibility', 'hidden');
+        })
+        .on('renderlet', (chart) => {
+          // Move the y label of chart to top of axis
+          chart.select('.y-axis-label.y-label')
+            .attr('transform', 'translate(100,30),rotate(0)')
+            .style('visibility', 'visible');
+        });
+        attChart.xAxis().tickFormat(d => moment(d).format('YYYY-MM-DD'));
+        attChart.render();
+    }
+
+    function renderCharts(ndx, range) {
+      oeeChart.width(700).height(300)
+          .colors(d3.scaleOrdinal().range(['#0090C1']))
+          .margins({left: 0, top: 5, right: 0, bottom: 0})
+          .x(d3.scaleTime().domain(range))
+          .xUnits(d3.timeDays)
+          .y(d3.scaleLinear().domain([60,110]))
+          .brushOn(false)
+          .dimension(timeDim1)
+          .group(timeDim1.group().reduceSum(d => +d.oee))
+          .render();
+      avaChart.height(100)
+          .colors(d3.scaleOrdinal().range(['#0090C1']))
+          .margins({left: 0, top: 5, right: 0, bottom: 0})
+          .x(d3.scaleTime().domain(range))
+          .xUnits(d3.timeDays)
+          .y(d3.scaleLinear().domain([60,110]))
+          .brushOn(false)
+          .dimension(timeDim1)
+          .group(timeDim1.group().reduceSum(d => +d.availability))
+          .render();
+      perChart.height(100)
+          .colors(d3.scaleOrdinal().range(['#0090C1']))
+          .margins({left: 0, top: 0, right: 0, bottom: 0})
+          .x(d3.scaleTime().domain(range))
+          .xUnits(d3.timeDays)
+          .y(d3.scaleLinear().domain([60,110]))
+          .brushOn(false)
+          .dimension(timeDim1)
+          .group(timeDim1.group().reduceSum(d => +d.performance))
+          .render();
+      quaChart.height(100)
+          .colors(d3.scaleOrdinal().range(['#0090C1']))
+          .margins({left: 0, top: 0, right: 0, bottom: 0})
+          .x(d3.scaleTime().domain(range))
+          .xUnits(d3.timeDays)
+          .y(d3.scaleLinear().domain([60,110]))
+          .brushOn(false)
+          .dimension(timeDim1)
+          .group(timeDim1.group().reduceSum(d => +d.quality))
+          .render();
+
+    }
+
+    function renderGauges(ndx) {
+      gaugeD3('.oee-gauge .gauge', {
+        percentage: timeDim1.top(1)[0].oee,
+        width: 600,
+        height: 600,
+        titleFontSize: 60
+      });
+      gaugeD3('.ava-gauge .gauge', { percentage: timeDim1.top(1)[0].availability });
+      gaugeD3('.per-gauge .gauge', { percentage: timeDim1.top(1)[0].performance });
+      gaugeD3('.qua-gauge .gauge', { percentage: timeDim1.top(1)[0].quality });
+    }
+
+    function gaugeD3(el , options) {
+      const opts = Object.assign({
+        percentage: 80,
+        duration: 700,
+        titleFontSize: 30,
+        titleColor: 'white',
+        subTitleFontSize: 18,
+        subTitleColor: 'white',
+      }, options);
+
+      const width = opts.width || 350;
+      const height = opts.height || 350;
+      const outerRadius = opts.outerRadius || 0.8 * (width > height? width : height)/2;
+      const innerRadius = opts.innerRadius || 0.8 * outerRadius;
+
+      d3.select(el).selectAll("*").remove();
+      const container = d3.select(el)
+        .append('svg')
+          .attr('width', width).attr('height', width);
+
+      // Title
+      container.append('text')
+        .attr('fill', opts.titleColor)
+        .attr('font-size', opts.titleFontSize)
+        .attr('text-anchor', 'middle')
+        .attr('transform', `translate(${width*0.5}, ${height*0.5})`)
+        .text(opts.percentage + '%');
+      // // Sub-title
+      // container.append('text')
+      //   .attr('fill', opts.subTitleColor)
+      //   .attr('font-size', opts.subTitleFontSize)
+      //   .attr('text-anchor', 'middle')
+      //   .attr('transform', `translate(${width*0.5}, ${height*0.5 + opts.titleFontSize})`)
+      //   .text('sub-title');
+      // Gauge
+      const arc = d3.arc()
+        .innerRadius(innerRadius)
+        .outerRadius(outerRadius)
+        // .startAngle(2*Math.PI*1*0.8)
+        .endAngle(2*Math.PI);
+      container.append('path')
+        .datum({ startAngle: 2*Math.PI })
+        .attr('d', arc)
+          .attr('stroke', 'none')
+          .attr('fill', '#6454CE') //#0090C1
+          .attr('stroke-width', 2)
+          .attr('transform', `translate(${width*0.5}, ${height*0.5})`)
+        .transition()
+          .duration(opts.duration)
+          .attrTween("d", arcTween(2*Math.PI*1*(1-opts.percentage/100)));
+
+      function arcTween(newAngle) {
+        return function(d) {
+          var interpolate = d3.interpolate(d.startAngle, newAngle);
+          return function(t) {
+            d.startAngle = interpolate(t);
+            return arc(d);
+          };
+        };
+      }
+    }
 
   });
 </script>
