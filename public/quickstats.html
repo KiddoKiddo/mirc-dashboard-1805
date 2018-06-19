@@ -16,11 +16,10 @@
 	  .order-1, .output-1, .gauge-1 {
 		grid-row: 1;
 		font-size: 50px;
-		
 	  }
-	  .gauge-1 {
+	  .gauge-1{
 		border-right: solid 1px #999999;
-		}
+	  }
 	  .order-2, .output-2, .gauge-2 {
 		grid-row: 1;
 		font-size: 50px;
@@ -30,6 +29,7 @@
 	  }
 	  .container-grid {
 		font-size: 25px;
+		border-bottom: solid 1px #999999;
 	  }
 	  .number {
 		margin: 0.5em;
@@ -60,8 +60,11 @@
 		fill: white;
 		font-size: 20px;
 	  }
+	  .dc-chart path.line{
+		stroke-width: 5px;
+	  }
 	  #trend-chart svg{
-		width:1200px;
+		width: 1750px;
 	  }
   </style>
   
@@ -82,10 +85,11 @@
       <div class="order-2"><div class="number" id="order2"></div> Orders</div>
       <div class="output-2"><div class="number" id="output2"></div> Outputs</div>
       <div class="gauge-2"><div id="gauge-ytd"></div></div>
-      <div class="trend">
+	  <div class="trend">
         <div id="trend-chart"></div>
       </div>
     </div>
+  </div>
 	<svg><defs>
 		<marker
 		  id="arrow"
@@ -99,7 +103,6 @@
 		  <path d="M2,2 L10,6 L2,10 L6,6 L2,2" style="fill: #17202a;"></path>
 		</marker>
 	</defs></svg>
-  </div>
   <script type="text/javascript" src="js/d3/d3.min.js"></script>
   <script type="text/javascript" src="js/crossfilter2/crossfilter.js"></script>
   <script type="text/javascript" src="js/dcjs/dc.min.js"></script>
@@ -213,16 +216,18 @@
 			
 			//Bar Chart & Line Chart
 			trendChart
-				.width(1000).height(500)
+				.width(1400).height(480)
 				.margins({top: 70, right: 40, bottom: 160, left: 120})
 				.x(d3.scaleTime().domain([domainMin, domainMax]))
 				.xUnits(d3.timeDays)
 				.elasticX(false)
-				.elasticY(true)				
+				.elasticY(true)	
+				.yAxisPadding(2)
 				.brushOn(false)
 				.mouseZoomable(false)
 				.yAxisLabel('Throughput')
-				.legend(dc.legend().x(1000).y(25).itemHeight(35).gap(35).legendText(function(d){return d.key;}))
+				.legend(dc.legend().x(1450).y(25).itemHeight(35).gap(35).legendText(function(d){return d.key;}))
+				.title(function(d){return d.value;})
 				.on('pretransition', (chart) => {
 					// Rotate x label
 					chart.selectAll('g.axis.x g.tick text')
@@ -233,7 +238,6 @@
 					chart.selectAll('rect').on('click', function(d) {
 					  trendChart.filter(d.data.key);
 					});	
-					
 					chart.select('g.dc-legend')
 						.append("text")
 						.attr("text-anchor", "middle")
@@ -262,7 +266,7 @@
 						.colors(d3.scaleOrdinal().range(['#7d3c98']))	
 						.dimension(dateDim) 
 						.group(throughputGroup)
-						.gap(80)	
+						.gap(100)	
 						.centerBar(true),
 					
 					dc.lineChart(trendChart)
@@ -270,9 +274,11 @@
 						.dimension(dateDim)
 						.group(ordersGroup)
 						.renderArea(false)
-						.renderDataPoints({fillOpacity:5.0, strokeOpacity: 5.0, radius: 2})
+						.renderDataPoints(true)
+						.dotRadius(6)
 						.clipPadding(10)
 				])
+			trendChart.xAxis().ticks(5).tickFormat(d => moment(d).format('YYYY-MM-DD'));
 			trendChart.render();
 		
 		
@@ -315,12 +321,11 @@
 			//Gauge1 and Gauge2
 			gauge1
 				.colors(d3.scaleOrdinal().range(['#f7dc6f','#27ae60','#27ae60','#303030','#303030','#303030','#303030','#303030','#303030','#cb4335','#cb4335','#f7dc6f']))
-				.width(600).height(350)
+				.width(550).height(350)
 				.slicesCap(12)
-				.cx(300)
-				.cy(250)
+				.cx(275).cy(250)
 				.innerRadius(10)
-				.externalLabels(5)
+				.title(function(){})
 				.dimension(sliceDim)
 				.group(sliceDimGroup)	
 				.on('pretransition', function(gauge1) {
@@ -331,7 +336,7 @@
 						.append("text")
 						.attr("text-anchor", "middle")
 						.attr("fill", "white")
-						.attr("font-size", "25px")
+						.attr("font-size", "40px")
 						.attr("dy", "50")
 						.text(moment(new Date(selectDateStr)).format("YYYY-MM-DD"));		
 					gauge1.select('g')
@@ -349,12 +354,11 @@
 
 			gauge2
 				.colors(d3.scaleOrdinal().range(['#f7dc6f','#27ae60','#27ae60','#303030','#303030','#303030','#303030','#303030','#303030','#cb4335','#cb4335','#f7dc6f']))				
-				.width(600).height(350)
+				.width(550).height(350)
 				.slicesCap(12)
-				.cx(300)
-				.cy(250)
+				.cx(275).cy(250)
 				.innerRadius(10)
-				.externalLabels(5)
+				.title(function(){})
 				.dimension(sliceDim)
 				.group(sliceDimGroup)			
 				.on('pretransition', function(gauge2) {
@@ -365,7 +369,7 @@
 						.append("text")
 						.attr("text-anchor", "middle")
 						.attr("fill", "white")
-						.attr("font-size", "25px")
+						.attr("font-size", "40px")
 						.attr("dy", "50")
 						.text(moment(new Date(prevDateStr)).format("YYYY-MM-DD"))
 					gauge2.select('g')
