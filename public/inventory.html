@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Inventory</title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="css/dc.css"/>
+  <link rel="stylesheet" type="text/css" href="css/micr-layout.css"/>
+  <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
+  <style>
+  .container-grid { }
+
+  #inventory-to-sales-ratio { grid-area: 2/1/span 1/span 1; }
+  #ave-inventory-turnover {
+    grid-area: 2/2/span 1/span 1;
+  }
+  #targets { grid-area: 1/1/span 1/span 4; }
+  #cost-and-status {
+    grid-area: 2/3/span 1/span 2;
+    border-left: solid 1px #999999;
+    padding-left: 100px;
+  }
+
+  .gauge-container {
+    display: inline-flex;
+    flex-direction: column;
+  }
+  .gauge-container .panel-title {
+    text-align: center;
+    font-size: 25px;
+  }
+  .panel-value {
+    font-size: 60px;
+    padding: 100px 150px;
+    margin: 50px 20px;
+    background: #757575;
+    border-radius: 20px;
+    text-shadow: 1px 1px 2px black, 2px 2px 10px darkblue;
+  }
+  /* dc-chart */
+  .dc-chart .axis text {
+    fill: white;
+    font-size:20px;
+  }
+  .dc-chart .y-axis-label,
+  .dc-chart .x-axis-label {
+    fill: white;
+    font-size:25px;
+    font-weight: bold;
+  }
+  #targets .dc-chart .chart-body path.line {
+    stroke-width: 5px;
+  }
+  .dc-chart .axis path, .dc-chart .axis line {
+    stroke: #999;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">
+      <h1>Inventory</h1>
+      <hr>
+    </div>
+    <div class="container-grid">
+      <div id="inventory-to-sales-ratio">
+        <div class="panel-title">Inventory to Sales Ratio</div>
+        <div class="panel-value"></div>
+      </div>
+      <div id="ave-inventory-turnover">
+        <div class="panel-title">Avg. Inventory Turnover</div>
+        <div class="panel-value"></div>
+      </div>
+      <div id="targets">
+        <div class="panel-title">Target Inventory Turnover</div>
+        <div class="chart"></div>
+      </div>
+      <div id="cost-and-status">
+        <div class="panel-title">Inventory Carrying Cost and Status</div>
+        <div id="wip-gauge" class="gauge-container">
+          <div class="panel-title">WIP: <span class="gauge-value"></span></div>
+          <div class="gauge"></div>
+        </div>
+        <div id="raw-material-gauge" class="gauge-container">
+          <div class="panel-title">Raw Material: <span class="gauge-value"></span></div>
+          <div class="gauge"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" src="js/d3/d3.min.js"></script>
+  <script type="text/javascript" src="js/crossfilter2/crossfilter.js"></script>
+  <script type="text/javascript" src="js/dcjs/dc.min.js"></script>
+
+  <script type="text/javascript" src="js/jquery/jquery-3.3.1.min.js"></script>
+  <script type="text/javascript" src="js/moment/moment.js"></script>
+  <script type="text/javascript" src="js/animejs/anime.min.js"></script>
+
+  <script type="text/javascript" src="js/datefilter/datefilter.js"></script>
+
+  <script type="text/javascript">
+  $(() => {
+    const targets = [
+      { updated_date: '2018-08-01 00:00:00', value: 15.6},
+      { updated_date: '2018-07-01 00:00:00', value: 13.3},
+      { updated_date: '2018-06-01 00:00:00', value: 16.1},
+      { updated_date: '2018-05-01 00:00:00', value: 10.9},
+      { updated_date: '2018-04-01 00:00:00', value: 12.9},
+      { updated_date: '2018-03-01 00:00:00', value: 12.2},
+      { updated_date: '2018-02-01 00:00:00', value: 16.8},
+      { updated_date: '2018-01-01 00:00:00', value: 18.2},
+      { updated_date: '2017-12-01 00:00:00', value: 11.2},
+      { updated_date: '2017-11-01 00:00:00', value: 14.5},
+      { updated_date: '2017-10-01 00:00:00', value: 10.0},
+      { updated_date: '2017-09-01 00:00:00', value: 14.2},
+    ];
+    const ndx = crossfilter(targets);
+    const timeDim = ndx.dimension(d => new Date(d.updated_date));
+
+    const range = [new Date('2017-09-01 00:00:00'), new Date('2018-08-01 00:00:00')];
+
+    const chart = dc.lineChart("#targets .chart");
+    chart.width(1600).height(400)
+        .colors(d3.scaleOrdinal().range(['#0090C1']))
+        .margins({top: 30, right: 40, bottom: 40, left: 120})
+        .x(d3.scaleTime().domain(range))
+        .xUnits(d3.timeMonths)
+        .elasticX(true)
+        .xAxisPadding(10)
+        .elasticY(true)
+        .yAxisPadding(2)
+        .dotRadius(20)
+        .brushOn(false)
+        .dimension(timeDim)
+        .group(timeDim.group().reduceSum(d => +d.value));
+    chart.xAxis().tickFormat(d => moment(d).format('MMM YYYY'));
+    chart.render();
+
+    const inventoryToSalesRatio = 11.6;
+    const aveInventoryTurnover =  18.2;
+
+    $('#inventory-to-sales-ratio .panel-value').text(inventoryToSalesRatio);
+    $('#ave-inventory-turnover .panel-value').text(aveInventoryTurnover);
+
+    const WIP = 0.68;
+    const rawMaterial = 0.87;
+
+    $('#wip-gauge .gauge-value').text(Math.floor(WIP * 990));
+    gaugeD3('#wip-gauge .gauge', {
+      percentage: WIP * 100,
+      width: 350, height: 350,
+      titleFontSize: 50,
+    });
+
+    $('#raw-material-gauge .gauge-value').text(Math.floor(rawMaterial * 990));
+    gaugeD3('#raw-material-gauge .gauge', {
+      percentage: rawMaterial * 100,
+      width: 350, height: 350,
+      gaugeColor: '#1D6348',
+      titleFontSize: 50,
+    });
+
+    function gaugeD3(el , options) {
+      const opts = Object.assign({
+        percentage: 80,
+        duration: 700,
+        titleFontSize: 30,
+        titleColor: 'white',
+        subTitleFontSize: 18,
+        subTitleColor: 'white',
+        gaugeColor: '#6454CE'
+      }, options);
+
+      const width = opts.width || 300;
+      const height = opts.height || 300;
+      const outerRadius = opts.outerRadius || 0.8 * (width > height? width : height)/2;
+      const innerRadius = opts.innerRadius || 0.8 * outerRadius;
+
+      d3.select(el).selectAll("*").remove();
+      const container = d3.select(el)
+        .append('svg')
+          .attr('width', width).attr('height', width);
+
+      // Title
+      container.append('text')
+        .attr('fill', opts.titleColor)
+        .attr('font-size', opts.titleFontSize)
+        .attr('text-anchor', 'middle')
+        .attr('transform', `translate(${width*0.5}, ${height*0.5})`)
+        .text(opts.percentage + '%');
+      // // Sub-title
+      // container.append('text')
+      //   .attr('fill', opts.subTitleColor)
+      //   .attr('font-size', opts.subTitleFontSize)
+      //   .attr('text-anchor', 'middle')
+      //   .attr('transform', `translate(${width*0.5}, ${height*0.5 + opts.titleFontSize})`)
+      //   .text('sub-title');
+      // Gauge
+      const arc = d3.arc()
+        .innerRadius(innerRadius)
+        .outerRadius(outerRadius)
+        // .startAngle(2*Math.PI*1*0.8)
+        .endAngle(2*Math.PI);
+      container.append('path')
+        .datum({ startAngle: 2*Math.PI })
+        .attr('d', arc)
+          .attr('stroke', 'none')
+          .attr('fill', opts.gaugeColor) //#0090C1
+          .attr('stroke-width', 2)
+          .attr('transform', `translate(${width*0.5}, ${height*0.5})`)
+        .transition()
+          .duration(opts.duration)
+          .attrTween("d", arcTween(2*Math.PI*1*(1-opts.percentage/100)));
+
+      function arcTween(newAngle) {
+        return function(d) {
+          var interpolate = d3.interpolate(d.startAngle, newAngle);
+          return function(t) {
+            d.startAngle = interpolate(t);
+            return arc(d);
+          };
+        };
+      }
+    }
+
+  });
+</script>
+
+</body>
+</html>

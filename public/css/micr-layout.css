@@ -8,7 +8,7 @@
 }
 .title {
   width: auto;
-  height: 80px;
+  height: 60px;
   margin: 20px 30px;
 }
 .container-grid {
@@ -17,7 +17,7 @@
   grid-auto-rows: 1fr;
   align-items: center;
   justify-items: center;
-  height: calc(100% - 120px);
+  height: calc(100% - 100px);
 }
 .title button {
   float: right;
