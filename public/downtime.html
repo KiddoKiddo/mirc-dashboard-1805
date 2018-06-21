@@ -1,16 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>dc.js - Pie Chart Example</title>
+    <title>Downtime</title>
     <meta charset="UTF-8">
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="../css/dc.css"/>
 	<link rel="stylesheet" type="text/css" href="https://unpkg.com/dc@3/dc.css" />
-	<script src="https://unpkg.com/d3@5/dist/d3.js"></script>
-	<script src="https://unpkg.com/crossfilter2@1.4/crossfilter.js"></script>
-	<script src="https://unpkg.com/dc@3/dc.js"></script>
-	<script src="https://rawgit.com/crossfilter/reductio/master/reductio.js"></script>
-	<script src="https://npmcdn.com/universe@latest/universe.js"></script>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
 	<style>
 	.dc-chart g {
 		fill: white;
@@ -26,18 +23,25 @@
     position: fixed; 
     width: 100%;
 	}
+	
+	.datefilter-months {
+		margin-top: 0px;
+	}
+	
+	.datefilter-menu {
+    top: 10px;
+	}
 	</style>
 </head>
 
 
 <body style="background-color:#303030;color:white">
-		<h1>
-		<div class="row">
-			<div class="col" style="margin-left:1%">Downtime</div>
-			<div class="col text-right" style="margin-right:1%">XX/XX/XXXX</div>
-		</div>
-		</h1>
-		<hr style="border-color:white">
+    <div class="title row" style="padding-top:10px;padding-bottom:10px">
+      <h1 class="col-md-10" style="padding-top:10px;margin-left:1%;font-size:36px;font-family:'Open Sans', sans-serif;font-weight:bold">Downtime</h1>
+	  <button style="margin-left:6%;"class="datefilter-btn float-right col-md-1"></button>
+	 </div>
+	<hr style="border-color:white;margin:0000">   
+
 	<div class="row">
 			<div class="col-md-6 border-right">
 
@@ -69,22 +73,65 @@
 
 
 
-<script type="text/javascript" src="../js/d3.js"></script>
-<script type="text/javascript" src="../js/crossfilter.js"></script>
-<script type="text/javascript" src="../js/dc.js"></script>					
-<script type="text/javascript">
+  <script type="text/javascript" src="js/d3/d3.min.js"></script>
+  <script type="text/javascript" src="js/crossfilter2/crossfilter.js"></script>
+  <script type="text/javascript" src="js/dcjs/dc.min.js"></script>
+
+  <script type="text/javascript" src="js/jquery/jquery-3.3.1.min.js"></script>
+  <script type="text/javascript" src="js/moment/moment.js"></script>
+  <script type="text/javascript" src="js/animejs/anime.min.js"></script>
+
+  <script type="text/javascript" src="js/datefilter/datefilter.js"></script>
+
+  <script type="text/javascript">
+    $(() => {
+    // TODO: Code to get date from url param
+    // Get date and time in URL to to use as filter
+    // $.utils.urlParam('from');
+
+    // Get the first date of current month
+    const current = new Date(), year = current.getFullYear(), month = current.getMonth();
+    const currentStr = moment(new Date(year, month, 1))
+                      .format('YYYY-MM-DD HH:mm:ss');
+
+    const datefilter = new DateFilter({
+      current: current, // Set today date
+      button: $('.title button'), // Button to open the filter
+      level: 'month', // 'month' or 'day'
+      onDataChange: (date) => {
+        // date is string
+        // E.g: '2018-06-01 00:00:00' for month selection (first day of the month)
+        //      '2018-07-28 00:00:00' for date selection
+        // Update charts
+        monthDim1.filterAll(); // Remove filters
+        monthDim1.filter(date); // Filter by current month
+        //renderPlots(downtime);
+		dc.redrawAll();
+      }
+    })
+
+    d3.csv('data/maint.csv')
+    .then((csv_data) => {
+      downtime = crossfilter(csv_data);
+      monthDim1 = downtime.dimension(d => d.start_calculation_timestamp);
+      monthDim1.filter(currentStr); // Filter by current month
+
+      renderPlots(downtime);
+    });
+
+	
 var downPie = dc.pieChart("#downpie");
 var unschdBarchart = dc.barChart("#unschdbar");
 var schdBarchart = dc.barChart("#schdbar");
 var dataTable = dc.dataTable("#downtable");
 
-d3.csv("data/Maint.csv").then(function(experiments) {
+    const renderPlots = (ndx) => {
 	  
-  var ndx           = crossfilter(experiments),
       Dimension  = ndx.dimension(function(d) {return d.machine_group;})
+	  filterDim = ndx.dimension(function(d) {return d.machine_group;})
 	  SumGroup = Dimension.group().reduceSum(function(d) {return d.scheduled_down_duration + d.unscheduled_down_duration;});
-	  UnscheduledGroup = Dimension.group().reduceSum(function(d) {return d.unscheduled_down_duration;});
-	  ScheduledGroup = Dimension.group().reduceSum(function(d) {return d.scheduled_down_duration;});	  
+	  UnscheduledGroup = filterDim.group().reduceSum(function(d) {return d.unscheduled_down_duration;});
+	  ScheduledGroup = filterDim.group().reduceSum(function(d) {return d.scheduled_down_duration;});	  
   
      groupedDimension = Dimension.group().reduce(
           function (p, v) {
@@ -97,6 +144,7 @@ d3.csv("data/Maint.csv").then(function(experiments) {
           function (p, v) {
               --p.number;
               p.total -= +(v.scheduled_down_duration);
+			  p.total -= +v.unscheduled_down_duration;
               p.avg = (p.number == 0) ? 0 : Math.round(p.total / p.number);
               return p;
           },
@@ -140,7 +188,7 @@ d3.csv("data/Maint.csv").then(function(experiments) {
 	unschdBarchart
 		.colors(d3.scaleOrdinal().range(['#0090C1']))
 		.x(d3.scaleBand())
-		.y(d3.scaleLinear().domain([0,140000]))
+		//.y(d3.scaleLinear().domain([0,140000]))
 		.xUnits(dc.units.ordinal)
         .width(900)
         .height(400)
@@ -149,10 +197,10 @@ d3.csv("data/Maint.csv").then(function(experiments) {
         .brushOn(false)
         .yAxisLabel("Cummulative Time (m)")
 		.xAxisLabel("Unscheduled Downtime")
-        .dimension(Dimension)
+        .dimension(filterDim)
 		.renderlet(function (unschdBarchart) {
 					unschdBarchart.selectAll("svg") <!-- customize SVG Mainframe first
-                      .attr('height', '500')<!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
+                      .attr('height', '600')<!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
 					  .attr('width','1100') <!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
 					unschdBarchart.select("g")	<!-- customize g, full area of graph.
                       .attr('transform', 'translate(40,80)') <!-- SVG controls the area the graph is drawn in (Starting from top left), while G itself is the whole of the graph. Translate the graph downwards makes room for labels.
@@ -175,16 +223,19 @@ d3.csv("data/Maint.csv").then(function(experiments) {
 					  .attr('text-anchor',"top")
                 })
         .group(UnscheduledGroup)
-        .on('renderlet', function(unschdBarchart) { <!-- allows to click on a bar for a function, clicking is logged in console.
+        .on('pretransition', function(unschdBarchart) { <!-- pretransition is eg clicking and animation shift after clicks.
             unschdBarchart.selectAll('rect').on("click", function(d) {
-                console.log("click!", d);
-            });
+                console.log("click!", d)
+            })
+					unschdBarchart.selectAll("svg") <!-- customize SVG Mainframe first
+                      .attr('height', '600')<!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
+					  .attr('width','1100') <!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
         });
 		
 	schdBarchart
 		.colors(d3.scaleOrdinal().range(['#0090C1']))
 		.x(d3.scaleBand())
-		.y(d3.scaleLinear().domain([0,140000]))
+		//.y(d3.scaleLinear().domain([0,140000]))
 		.xUnits(dc.units.ordinal)
         .width(900)
         .height(400)
@@ -193,7 +244,7 @@ d3.csv("data/Maint.csv").then(function(experiments) {
         .brushOn(false)
         .yAxisLabel("Cummulative Time (m)")
 		.xAxisLabel("Scheduled Downtime")
-        .dimension(Dimension)
+        .dimension(filterDim)
 		.renderlet(function (schdBarchart) {
 					schdBarchart.selectAll("svg") <!-- customize SVG Mainframe first
                       .attr('height', '500')<!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
@@ -219,10 +270,14 @@ d3.csv("data/Maint.csv").then(function(experiments) {
 					  .attr('text-anchor',"top")
                 })
         .group(ScheduledGroup)
-        .on('renderlet', function(schdBarchart) { <!-- allows to click on a bar for a function, clicking is logged in console.
+        .on('pretransition', function(schdBarchart) { <!-- allows to click on a bar for a function, clicking is logged in console.
             schdBarchart.selectAll('rect').on("click", function(d) {
                 console.log("click!", d);
-            });
+            })
+					schdBarchart.selectAll("svg") <!-- customize SVG Mainframe first
+                      .attr('height', '500')<!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
+					  .attr('width','1100') <!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
+
         });
 
 	dataTable
@@ -246,12 +301,11 @@ d3.csv("data/Maint.csv").then(function(experiments) {
 	.endSlice(5)
     .order(d3.descending)
 	
-  dataTable.render();	
-  unschdBarchart.render();
-  downPie.render();
-  schdBarchart.render();
-		
+dc.renderAll()		
+
+};
 });
+
 </script>
 
 </body>
