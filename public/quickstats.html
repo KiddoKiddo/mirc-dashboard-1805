@@ -13,14 +13,14 @@
 	  .title span {
 		float: right;
 	  }
-	  .order-1, .output-1, .gauge-1 {
+	  .order-1, .output-1, .gauge-1{
 		grid-row: 1;
 		font-size: 50px;
 	  }
 	  .gauge-1{
 		border-right: solid 1px #999999;
 	  }
-	  .order-2, .output-2, .gauge-2 {
+	  .order-2, .output-2, .gauge-2, #title2 {
 		grid-row: 1;
 		font-size: 50px;
 	  }
@@ -54,10 +54,6 @@
 	  }
 	  .dc-chart .axis path, .dc-chart .axis line {
 		stroke: #999;
-	  }
-	  .dc-chart .pie-slice.external {
-		fill: white;
-		font-size: 20px;
 	  }
 	  .dc-chart path.line{
 		stroke-width: 5px;
@@ -320,9 +316,9 @@
 			//Gauge1 and Gauge2
 			gauge1
 				.colors(d3.scaleOrdinal().range(['#f7dc6f','#27ae60','#27ae60','#303030','#303030','#303030','#303030','#303030','#303030','#cb4335','#cb4335','#f7dc6f']))
-				.width(550).height(350)
+				.width(550).height(400)
 				.slicesCap(12)
-				.cx(275).cy(250)
+				.cx(275).cy(280)
 				.innerRadius(10)
 				.title(function(){})
 				.dimension(sliceDim)
@@ -335,7 +331,14 @@
 						.append("text")
 						.attr("text-anchor", "middle")
 						.attr("fill", "white")
-						.attr("font-size", "40px")
+						.attr("font-size", "50px")
+						.attr("dy", "-240")
+						.text("Today")
+					gauge1.select('g')
+						.append("text")
+						.attr("text-anchor", "middle")
+						.attr("fill", "white")
+						.attr("font-size", "35px")
 						.attr("dy", "50")
 						.text(moment(new Date(selectDateStr)).format("YYYY-MM-DD"));		
 					gauge1.select('g')
@@ -353,9 +356,9 @@
 
 			gauge2
 				.colors(d3.scaleOrdinal().range(['#f7dc6f','#27ae60','#27ae60','#303030','#303030','#303030','#303030','#303030','#303030','#cb4335','#cb4335','#f7dc6f']))				
-				.width(550).height(350)
+				.width(550).height(400)
 				.slicesCap(12)
-				.cx(275).cy(250)
+				.cx(275).cy(280)
 				.innerRadius(10)
 				.title(function(){})
 				.dimension(sliceDim)
@@ -363,12 +366,19 @@
 				.on('pretransition', function(gauge2) {
 					gauge2.selectAll('text.pie-slice').text(function(d) {
 						<!-- return d.data.key; -->
-					})		
+					})	
 					gauge2.select('g')
 						.append("text")
 						.attr("text-anchor", "middle")
 						.attr("fill", "white")
-						.attr("font-size", "40px")
+						.attr("font-size", "50px")
+						.attr("dy", "-240")
+						.text("Yesterday")
+					gauge2.select('g')
+						.append("text")
+						.attr("text-anchor", "middle")
+						.attr("fill", "white")
+						.attr("font-size", "35px")
 						.attr("dy", "50")
 						.text(moment(new Date(prevDateStr)).format("YYYY-MM-DD"))
 					gauge2.select('g')
