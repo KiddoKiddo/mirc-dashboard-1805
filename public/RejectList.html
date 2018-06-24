@@ -13,32 +13,35 @@
 		fill: white;
 		font-size: 25px;
 	}
-		
+
 	.dc-chart g.tick text {
 		fill: white;
 		font-size:20px;
 	}
-	
+
 	.dc-chart .pie-slice {
-	
+
 		font-size:20px;
 	}
-	
+
 	body{
-    position: fixed; 
+    position: fixed;
     width: 100%;
 	}
-	
+
 	.datefilter-months {
 		margin-top: 0px;
 	}
-	
+
 	.datefilter-menu {
     top: 10px;
 	}
 	.dc-chart path.line{
 		stroke-width: 5px;
 	}
+  .dc-chart .pie-slice.external {
+    fill: #FFFFFF;
+  }
 	</style>
 </head>
 
@@ -68,21 +71,18 @@
 				</div>
 			</div>
 	</div>
-	
+
 	<h1>
 		<div class="row">
 			<div class="col" style="margin-left:1%">Cost Per Unit</div>
 		</div>
 	</h1>
 	<hr style="border-color:white;margin-bottom:0">
-		
+
 	<div class="row">
 		<div class="col-md-12">
 					<table style="margin-top:2%" class="table table-striped table-dark" id="rejectTable"></table>
 		</div>
-		<!-- <div class="col-md-3"> -->
-					<!-- <div style="margin-top:5%;" id="ordinalReject"></div> -->
-		<!-- </div> -->
 	</div>
 
 
@@ -104,18 +104,16 @@
     // $.utils.urlParam('from');
 
     // TODO: get the first date of current month
-    <!-- const current = new Date('2018-05-01 00:00:00'); -->
-    <!-- const currentStr = moment(current).format('YYYY-MM-DD HH:mm:ss'); -->
-	
+    // const current = new Date('2018-05-01 00:00:00'); -->
+    // const currentStr = moment(current).format('YYYY-MM-DD HH:mm:ss'); -->
+
 	const current = new Date(), year = current.getFullYear(), month = current.getMonth(), day = current.getDate();
-    const currentStr = moment(new Date(year, month, day))
-                      .format('YYYY-MM-DD HH:mm:ss.SSS');
-	
+  const currentStr = moment(new Date(year, month, day)).format('YYYY-MM-DD HH:mm:ss.SSS');
+
 	//Declare the Min and Max in the range (Initial)
-	const current1 = new Date(currentStr); const current2 = new Date(currentStr);
-	const rangeMin = moment(current1.setDate(current1.getDate()-6.5)).format('YYYY-MM-DD HH:mm:ss.SSS');
-	const rangeMax = moment(current2.setDate(current2.getDate()+0.5)).format('YYYY-MM-DD HH:mm:ss.SSS');
-	
+	const rangeMin = moment(current).hours(0).minutes(0).seconds(0).format('YYYY-MM-DD HH:mm:ss.SSS');
+	const rangeMax = moment(current).hours(23).minutes(59).seconds(59).format('YYYY-MM-DD HH:mm:ss.SSS');
+
 	const datefilter = new DateFilter({
 		current: current, // Set today date
 		button: $('.title button'), // Button to open the filter
@@ -125,34 +123,32 @@
 			// E.g: '2018-06-01 00:00:00' for month selection (first day of the month)
 			//      '2018-07-28 00:00:00' for date selection
 			// Update charts
-			const dateNum = new Date(date); const dateNum1 = new Date(date);	
-			const updateMin = moment(dateNum.setDate(dateNum.getDate()-6.5)).format('YYYY-MM-DD HH:mm:ss.SSSS');		
-			const updateMax = moment(dateNum1.setDate(dateNum1.getDate()+0.5)).format('YYYY-MM-DD HH:mm:ss.SSSS');
+			const updateMin = moment(date).hours(0).minutes(0).seconds(0).format('YYYY-MM-DD HH:mm:ss.SSS');
+			const updateMax = moment(date).hours(23).minutes(59).seconds(59).format('YYYY-MM-DD HH:mm:ss.SSS');
 			console.log(updateMin,updateMax)
 			monthDim1.filterAll(); // Remove filters
 			monthDim1.filter([new Date(updateMin), new Date(updateMax)]);
 			dc.redrawAll();
 		}
-    })	
-	
+  })
+
 	var rejectBar = dc.barChart("#rejectBar");
 	rejectPie = dc.pieChart("#rejectPie");
 	defectPie = dc.pieChart("#defectPie");
 	rejectTable = dc.dataTable("#rejectTable");
- 	var gearArr = []; 
+ 	var gearArr = [];
 
 
 
     d3.csv('data/rejects.csv').then((experiments) => {
       downtime = crossfilter(experiments);
       monthDim1 = downtime.dimension(d => Date.parse(d.start_time));
-	  monthDim1.filterRange([new Date(rangeMin), new Date(rangeMax)]);
-
+	    monthDim1.filterRange([new Date(rangeMin), new Date(rangeMax)]);
+      console.log(new Date(rangeMin), new Date(rangeMax));
       renderPlots(downtime);
-	  
 });
-	
-	  
+
+
 
 function accumulate_group(source_group) {
     return {
@@ -182,17 +178,18 @@ function remove_empty_bins(source_group) {
 
 
     const renderPlots = (ndx) => {
+      const rejectDim = ndx.dimension(function(d) {return d.rejected;})
+      rejectDim.filter(1);
+
       partOneDimension  = ndx.dimension(function(d) {return d.part_name;})
       partTwoDimension  = ndx.dimension(function(d) {return d.part_name;})
-	 	    
-	  defectDimension = ndx.dimension(function(d){return d.defect;})
-	  defectGroup = defectDimension.group().reduceSum(function(d) {return +d.rejected;})
 
-	  rejectOneGroup = partOneDimension.group().reduceSum(function(d) {return +d.rejected;})
-	  rejectTwoGroup = partTwoDimension.group().reduceSum(function(d) {return +d.rejected;})
-	  	  
-		 //console.log(cummulateRej.all().length)
 
+  	  defectDimension = ndx.dimension(function(d){return d.defect;})
+  	  defectGroup = defectDimension.group().reduceSum(function(d) {return +d.rejected;})
+
+  	  rejectOneGroup = partOneDimension.group().reduceSum(function(d) {return +d.rejected;})
+  	  rejectTwoGroup = partTwoDimension.group().reduceSum(function(d) {return +d.rejected;})
 
 	  rejectBar
 		.colors(d3.scaleOrdinal().range(['#0090C1']))
@@ -210,10 +207,10 @@ function remove_empty_bins(source_group) {
 		.xAxisLabel("Rejected Units")
         .dimension(partOneDimension)
 		.renderlet(function (rejectBar) {
-					rejectBar.selectAll("svg") <!-- customize SVG Mainframe first
+					rejectBar.selectAll("svg") // customize SVG Mainframe first
                       .attr('height', '700')
-					  .attr('width','1200') 
-					rejectBar.select("g")	<!-- customize g, full area of graph.
+					  .attr('width','1200')
+					rejectBar.select("g")	// customize g, full area of graph.
                       .attr('transform', 'translate(30,30)')
 					rejectBar.selectAll("g text.x-axis-label")
                       .attr('dy', '-701')
@@ -233,10 +230,10 @@ function remove_empty_bins(source_group) {
                       .attr('transform', "rotate(0)")
 					  .attr('text-anchor',"top")
                 })
-        .on('preRedraw', function(rejectBar) { <!-- allows to click on a bar for a function, clicking is logged in console.
+        .on('preRedraw', function(rejectBar) { // allows to click on a bar for a function, clicking is logged in console.
         });
 		rejectBar.yAxis().ticks(5)
-		
+
 	rejectPie
 	.colors(d3.scaleOrdinal().range(['#022F40','#0090C1','#45B1D5','#2D4656','#046E8F']))
     .width(950)
@@ -244,7 +241,8 @@ function remove_empty_bins(source_group) {
 	.controlsUseVisibility(true)
     .dimension(partTwoDimension)
 	.minAngleForLabel(10)
-	.slicesCap(4)
+	.slicesCap(6)
+  .externalLabels(2)
 	//.data(function (group) {  return group.top(5).filter(function(kv) { return kv.value > 0; }); })
 	.cx(300)
     .innerRadius(80)
@@ -254,15 +252,15 @@ function remove_empty_bins(source_group) {
         rejectPie.selectAll('text.pie-slice').text(function(d) {
             return d.data.key;// + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
         })
-		rejectPie.selectAll('.dc-legend-item text')	<!--customization of legend object is in "pretransition"
-		.attr('dy', '3')							<!-- make labels aligned with legend square indicators
-		.attr('dx','15')							<!-- makes some space between legend square indicator and labels.
+		rejectPie.selectAll('.dc-legend-item text')	//customization of legend object is in "pretransition"
+		.attr('dy', '3')							// make labels aligned with legend square indicators
+		.attr('dx','15')							// makes some space between legend square indicator and labels.
 		rejectPie.select('svg')
 		.attr("width", "1200")
 		rejectPie.select('g')
 		.append("text")
 		.attr("text-anchor", "middle")
-		.text("Total Rejected Units")
+		.text("Total Rej. Units")
 		.attr("font-size","25")
 		.append("br")
 		rejectPie.select('g')
@@ -274,7 +272,7 @@ function remove_empty_bins(source_group) {
 		//rejectPie.data(function (group) {  return group.all().filter(function(kv) { return kv.value > 0; }); })
 		rejectPie.slicesCap(4)
 	    });
-		
+
 	defectPie
 	.colors(d3.scaleOrdinal().range(['#022F40','#0090C1','#45B1D5','#2D4656','#046E8F']))
     .width(950)
@@ -283,6 +281,7 @@ function remove_empty_bins(source_group) {
     .dimension(defectDimension)
 	//.data(function (group) {  return group.top(5).filter(function(kv) { return kv.value > 0; }); })
 	.slicesCap(4)
+  .externalLabels(25)
 	.cx(300)
 	//.legend(dc.legend().x(600).y(25).itemHeight(35).gap(35))
     .group(remove_empty_bins(defectGroup))
@@ -290,18 +289,18 @@ function remove_empty_bins(source_group) {
         defectPie.selectAll('text.pie-slice').text(function(d) {
             return d.data.key;// + ' ' + dc.utils.printSingleValue((d.endAngle - d.startAngle) / (2*Math.PI) * 100) + '%';
         })
-		defectPie.selectAll('.dc-legend-item text')	<!--customization of legend object is in "pretransition"
-		.attr('dy', '3')							<!-- make labels aligned with legend square indicators
-		.attr('dx','15')							<!-- makes some space between legend square indicator and labels.
+		defectPie.selectAll('.dc-legend-item text')	//customization of legend object is in "pretransition"
+		.attr('dy', '3')							// make labels aligned with legend square indicators
+		.attr('dx','15')							// makes some space between legend square indicator and labels.
 		defectPie.select('svg')
 		.attr("width", "1200")
 		//defectPie.data(function (group) {  return group.all().filter(function(kv) { return kv.value > 0; }); })
 		defectPie.slicesCap(4)
-	    });	
+	    });
 	};
-	
+
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
     d3.csv('data/rejects.csv').then((experiments) => {
       utilization = crossfilter(experiments);
       monthDim2 = utilization.dimension(d => d.start_time);
@@ -312,7 +311,6 @@ function remove_empty_bins(source_group) {
 		if (x.part_name == "Gearbox"){
 		if (x.machine.replace(/\d+/g, '') == "PackagingMachine" ){
 			x.rejected = +x.rejected;
-			//console.log(x)  //this works
 			gearArr.push(x)
 		}
 		}
@@ -321,18 +319,17 @@ function remove_empty_bins(source_group) {
 		gearboxNdx = crossfilter(gearArr);
 		renderTable(gearboxNdx);
 		});
-		
+
     const renderTable = (gearboxNdx) => {
-	//console.log(gearboxNdx.all())
-	
+
 	  gearboxDim = gearboxNdx.dimension(function(d) {return d.part_name;})
 	  gearboxSumGroup = gearboxDim.group().reduceCount();
- 
+
 		moveMonths = gearboxNdx.dimension(function (d) {return Date.parse(d.stop_time);});
 	    cummulateRej    = moveMonths.group().reduceSum(function(d) {return d.rejected;}),
 	    nonEmptyHist = accumulate_group(cummulateRej)
-		
-	
+
+
 	rejectTable
     .width(1920)
     .height(480)
@@ -366,8 +363,8 @@ function remove_empty_bins(source_group) {
 		//rejectTable.select("td.dc-table-column._3")
        		//	  	  .append("div")
 				//	  .attr('id','ordinalReject')
-	});  
-  
+	});
+
   function renderRejectedLine () {
 	 var  rejectLine = dc.lineChart("#ordinalReject");
 		rejectLine
@@ -398,16 +395,16 @@ function remove_empty_bins(source_group) {
 		rejectLine.xAxis().ticks(0)
 		rejectLine.render();
   }
- 
+
 
 
   dc.renderAll();
- 
+
 
 
 		};
 
-		
+
 });
 </script>
 
