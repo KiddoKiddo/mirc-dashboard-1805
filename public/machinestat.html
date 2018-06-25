@@ -9,15 +9,10 @@
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
   <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
 	<style>
-  body {
-    height: 1080px;
-    width: 1920px;
-    overflow: hidden;
-  }
 	#machine1 {
     position: absolute;
-    left: 380px;
-    top: 100px;
+    left: 430px;
+    top: 120px;
     z-index: 2;
 	}
 	#label1 {
@@ -31,8 +26,8 @@
 	}
 	#machine2 {
     position: absolute;
-    left: 1130px;
-    top: 220px;
+    left: 1140px;
+    top: 240px;
     z-index: 2;
 	}
 	#label2 {
@@ -44,22 +39,10 @@
 	border: 5px solid black;
 	font-size: 25px;
 	}
-	#machine3 {
-    position: absolute;
-    left: 850px;
-    top: 430px;
-    z-index: 2;
-	}
-	#machine4 {
-    position: absolute;
-    left: 1300px;
-    top: 550px;
-    z-index: 2;
-	}
 	#machine5 {
     position: absolute;
-    left: 820px;
-    top: 780px;
+    left: 870px;
+    top: 800px;
     z-index: 2;
 	}
 	#label5 {
@@ -73,8 +56,8 @@
 	}
 	#machine6 {
     position: absolute;
-    left: 900px;
-    top: 780px;
+    left: 950px;
+    top: 800px;
     z-index: 2;
 	}
 	#label6 {
@@ -88,8 +71,8 @@
 	}
 	#machine7 {
     position: absolute;
-    left: 1030px;
-    top: 840px;
+    left: 1080px;
+    top: 860px;
     z-index: 2;
 	}
 	#label7 {
@@ -103,8 +86,8 @@
 	}
 	#machine8 {
     position: absolute;
-    left: 1300px;
-    top: 840px;
+    left: 1350px;
+    top: 860px;
     z-index: 2;
 	}
 	#label8 {
@@ -116,7 +99,6 @@
 	border: 5px solid black;
 	font-size: 25px;
 	}
-
 	</style>
 </head>
 
@@ -129,24 +111,40 @@
 		</div>
 		</h1>
 	<hr style="border-color:white;margin:0000">
-	<div class="container" style="margin-left:15%">
-			<img src="./image/test2.png">
+<div class="row">	
+	<div class="container" style="margin-left:15%;margin-right:7%">
+			<img src="image/test2.png">
 			<a id="label1">CMM</a>
 			<img id="machine1" src="image/green.png">
 			<a id="label2">NTX1000</a>
-			<img id="machine2" src="image/red.png">
-			<img id="machine3" src="image/green.png">
-			<img id="machine4" src="image/green.png">
-			<a id="label5">Station 3</a>
+			<img id="machine2" src="image/green.png">
+			<a id="label5">Station 3</a>			
 			<img id="machine5" src="image/green.png">
-			<a id="label6">Station 2</a>
+			<a id="label6">Station 2</a>			
 			<img id="machine6" src="image/green.png">
-			<a id="label7">Station 1</a>
+			<a id="label7">Station 1</a>			
 			<img id="machine7" src="image/green.png">
-			<a id="label8">Shot Peening</a>
+			<a id="label8">Shot Peening</a>			
 			<img id="machine8" src="image/green.png">
 	</div>
-
+	<div class="float-right col-md-2" style="margin-top:10%">
+		<div class="container">
+		<div class="row">
+			<img id="legend2" src="image/green.png" style="margin-bottom:15%">
+			<span style="margin-top:10%;font-weight:bold;font-size:20px"><a> Machine Running </a></span>
+		</div>
+		<div class="row">
+			<img id="legend2" src="image/orange.png" style="margin-bottom:15%">
+			<span style="margin-top:10%;font-weight:bold;font-size:20px"><a> Warning </a></span>
+		</div>
+		<div class="row">
+			<img id="legend2" src="image/red.png">
+			<span style="margin-top:10%;font-weight:bold;font-size:20px"><a> Machine Down </a></span>
+		</div>
+		</div>
+	</div>
+	</div>
+	
   <script type="text/javascript" src="js/d3/d3.min.js"></script>
   <script type="text/javascript" src="js/crossfilter2/crossfilter.js"></script>
   <script type="text/javascript" src="js/dcjs/dc.min.js"></script>
