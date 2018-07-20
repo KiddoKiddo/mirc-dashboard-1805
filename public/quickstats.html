@@ -8,7 +8,7 @@
   <link rel="stylesheet" type="text/css" href="css/dc.css"/>
   <link rel="stylesheet" type="text/css" href="css/micr-layout.css"/>
   <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
-  
+
   <style>
 	  .title span {
 		float: right;
@@ -34,7 +34,7 @@
 		margin: 0.5em;
 		font-size: 80px;
 		font-weight: bold;
-	  }		
+	  }
 	  .trend {
 		grid-row: 2;
 		grid-column: 2/5;
@@ -46,7 +46,7 @@
 		font-size:20px;
 	  }
 	  .dc-chart .y-axis-label,
-	  .dc-chart .x-axis-label, 
+	  .dc-chart .x-axis-label,
 	  .dc-legend-item{
 		fill: white;
 		font-size:25px;
@@ -62,7 +62,7 @@
 		width: 1700px;
 	  }
   </style>
-  
+
 </head>
 <body>
   <div class="container">
@@ -114,16 +114,16 @@
     // TODO: get the first date of current month
     <!-- const current = new Date('2018-05-01 00:00:00'); -->
     <!-- const currentStr = moment(current).format('YYYY-MM-DD HH:mm:ss'); -->
-	
+
 	const current = new Date(), year = current.getFullYear(), month = current.getMonth(), day = current.getDate();
     const currentStr = moment(new Date(year, month, day))
                       .format('YYYY-MM-DD HH:mm:ss');
-	
+
 	//Declare the Min and Max in the range (Initial)
 	const current1 = new Date(currentStr); const current2 = new Date(currentStr);
 	const rangeMin = moment(current1.setDate(current1.getDate()-6.5)).format('YYYY-MM-DD HH:mm:ss');
 	const rangeMax = moment(current2.setDate(current2.getDate()+0.5)).format('YYYY-MM-DD HH:mm:ss');
-	
+
 	const datefilter = new DateFilter({
 		current: current, // Set today date
 		button: $('.title button'), // Button to open the filter
@@ -133,18 +133,18 @@
 			// E.g: '2018-06-01 00:00:00' for month selection (first day of the month)
 			//      '2018-07-28 00:00:00' for date selection
 			// Update charts
-			const dateNum = new Date(date); const dateNum1 = new Date(date);	
-			const updateMin = moment(dateNum.setDate(dateNum.getDate()-6.5)).format('YYYY-MM-DD HH:mm:ss');		
+			const dateNum = new Date(date); const dateNum1 = new Date(date);
+			const updateMin = moment(dateNum.setDate(dateNum.getDate()-6.5)).format('YYYY-MM-DD HH:mm:ss');
 			const updateMax = moment(dateNum1.setDate(dateNum1.getDate()+0.5)).format('YYYY-MM-DD HH:mm:ss');
-			
+
 			weekDim.filterAll(); // Remove filters
 			weekDim.filterRange([new Date(updateMin), new Date(updateMax)]);
 			domainMax = new Date(updateMax);
 			domainMin = new Date(updateMin);
-			
+
 			renderPlots(trend);
 		}
-    })	
+    })
 
     // Chart declaration
     const trendChart = dc.compositeChart('#trend-chart');
@@ -152,8 +152,8 @@
 	const gauge2 = dc.pieChart('#gauge-ytd');
 	let trend;
 	let weekDim;
-	let domainMax, domainMin;	
-	
+	let domainMax, domainMin;
+
    // Read throughput data
      d3.csv('data/throughput_per_date_2.csv')
      .then((csv_data) => {
@@ -162,33 +162,33 @@
 		weekDim.filter([new Date(rangeMin), new Date(rangeMax)]);
 		domainMax = new Date(rangeMax);
 		domainMin = new Date(rangeMin);
-		
+
 		renderPlots(trend);
-	});	
-   
+	});
+
    //Draw charts
    const renderPlots = (data) => {
-		const dateDim = data.dimension(d => moment(d.date, "YYYY-MM-DD HH:mm:ss"));	
+		const dateDim = data.dimension(d => moment(d.date, "YYYY-MM-DD HH:mm:ss"));
 		const throughputGroup = dateDim.group().reduceSum(d => +d.throughput);
 		const ordersGroup = dateDim.group().reduceSum(d => +d.orders);
-		
+
 		//To fix the size of Pie Chart slices
 		const fakeData = [{"part_name":"slice1", "size":1},{"part_name":"slice2", "size":1},{"part_name":"slice3", "size":1},{"part_name":"slice4", "size":1},
 						  {"part_name":"slice5", "size":1},{"part_name":"slice6", "size":1},{"part_name":"slice7", "size":1},{"part_name":"slice8", "size":1},
-						  {"part_name":"slice9", "size":1},{"part_name":"slice10", "size":1},{"part_name":"slice11", "size":1},{"part_name":"slice12", "size":1}]; 
+						  {"part_name":"slice9", "size":1},{"part_name":"slice10", "size":1},{"part_name":"slice11", "size":1},{"part_name":"slice12", "size":1}];
 		const ndx = crossfilter(fakeData);
 		const sliceDim = ndx.dimension(d => d.part_name);
 		const sliceDimGroup = sliceDim.group().reduceSum(d => d.size);
-		
+
 		function setXY(outputVal, orderVal, arrowLength){
-			ratioVal = outputVal-orderVal; 
+			ratioVal = outputVal-orderVal;
 			if(ratioVal >= 0)
 				angleVal = (1/3)*Math.PI;
 			else if(ratioVal >= -10)
 				angleVal = 0;
 			else
 				angleVal = (5/3)*Math.PI;
-			
+
 			//Calculate the arrow position
 			if(angleVal<=0.5*Math.PI){
 				adjVal = arrowLength*Math.cos(0.5*Math.PI-angleVal);
@@ -208,7 +208,7 @@
 			}
 			return{x2:adjVal, y2:oppVal};
 		}
-			
+
 			//Bar Chart & Line Chart
 			trendChart
 				.width(1400).height(480)
@@ -216,7 +216,7 @@
 				.x(d3.scaleTime().domain([domainMin, domainMax]))
 				.xUnits(d3.timeDays)
 				.elasticX(false)
-				.elasticY(true)	
+				.elasticY(true)
 				.yAxisPadding(2)
 				.brushOn(false)
 				.mouseZoomable(false)
@@ -228,11 +228,11 @@
 					chart.selectAll('g.axis.x g.tick text')
 						.attr('transform', 'rotate(-30)')
 						.attr('text-anchor', 'end');
-						
+
 					// Highlight
 					chart.selectAll('rect').on('click', function(d) {
 					  trendChart.filter(d.data.key);
-					});	
+					});
 					chart.select('g.dc-legend')
 						.append("text")
 						.attr("text-anchor", "middle")
@@ -241,7 +241,7 @@
 						.attr("dx", "100")
 						.attr("dy", "25")
 						.text("Outputs")
-						
+
 					chart.select('g.dc-legend')
 						.append("text")
 						.attr("text-anchor", "middle")
@@ -250,7 +250,7 @@
 						.attr("dx", "100")
 						.attr("dy", "95")
 						.text("Orders")
-				})			
+				})
 				.on('renderlet', (chart) => {
 					// Move the y label of chart to top of axis
 					chart.select('.y-axis-label.y-label')
@@ -258,12 +258,12 @@
 				})
 				.compose([
 					dc.barChart(trendChart)
-						.colors(d3.scaleOrdinal().range(['#7d3c98']))	
-						.dimension(dateDim) 
+						.colors(d3.scaleOrdinal().range(['#7d3c98']))
+						.dimension(dateDim)
 						.group(throughputGroup)
-						.gap(100)	
+						.gap(100)
 						.centerBar(true),
-					
+
 					dc.lineChart(trendChart)
 						.curve(d3.curveLinear)
 						.dimension(dateDim)
@@ -275,22 +275,22 @@
 				])
 			trendChart.xAxis().ticks(5).tickFormat(d => moment(d).format('YYYY-MM-DD'));
 			trendChart.render();
-		
-		
+
+
 		//Update displayed values
 		let todayOutput, todayOrder, prevOutput, prevOrder;
-	
+
 			//Return filtered values as array, but sorted using Top
 			const outputNum = throughputGroup.top(7);
 			const orderNum = ordersGroup.top(7);
-			
+
 			//Declare date to compare
-			const selectDate = new Date(domainMax); const selectDate1 = new Date(domainMax);	
+			const selectDate = new Date(domainMax); const selectDate1 = new Date(domainMax);
 			const selectDateStr = moment(selectDate.setDate(selectDate.getDate()-0.5)).format('YYYY-MM-DD HH:mm:ss');
 			const prevDateStr = moment(selectDate1.setDate(selectDate1.getDate()-1.5)).format('YYYY-MM-DD HH:mm:ss');
-			
-			//Use For Loop to assign order and throughput values 
-			for (n=0; n<7; n++){			
+
+			//Use For Loop to assign order and throughput values
+			for (n=0; n<7; n++){
 				if (moment(new Date(outputNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == selectDateStr)
 					todayOutput = JSON.stringify(outputNum[n].value);
 				if (moment(new Date(orderNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == selectDateStr)
@@ -298,21 +298,24 @@
 				if (moment(new Date(outputNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == prevDateStr)
 					prevOutput = JSON.stringify(outputNum[n].value);
 				if (moment(new Date(orderNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == prevDateStr)
-					prevOrder = JSON.stringify(orderNum[n].value);			
+					prevOrder = JSON.stringify(orderNum[n].value);
 			}
-			
+      // Change as Humza's request
+      todayOutput = Math.floor(todayOrder * Math.random());
+      prevOutput = prevOrder;
+
 			const currentOrder = document.getElementById('order1');
 				currentOrder.innerHTML = todayOrder;
 			const currentOutput = document.getElementById('output1');
-				currentOutput.innerHTML = todayOutput;	
+				currentOutput.innerHTML = todayOutput;
 			const previousOrder = document.getElementById('order2');
-				previousOrder.innerHTML = prevOrder;	
+				previousOrder.innerHTML = prevOrder;
 			const previousOutput = document.getElementById('output2');
-				previousOutput.innerHTML = prevOutput;			
-			
+				previousOutput.innerHTML = prevOutput;
+
 			const today = setXY(todayOutput, todayOrder, 120);
 			const yesterday = setXY(prevOutput, prevOrder, 120);
-			
+
 			//Gauge1 and Gauge2
 			gauge1
 				.colors(d3.scaleOrdinal().range(['#f7dc6f','#27ae60','#27ae60','#303030','#303030','#303030','#303030','#303030','#303030','#cb4335','#cb4335','#f7dc6f']))
@@ -322,7 +325,7 @@
 				.innerRadius(10)
 				.title(function(){})
 				.dimension(sliceDim)
-				.group(sliceDimGroup)	
+				.group(sliceDimGroup)
 				.on('pretransition', function(gauge1) {
 					gauge1.selectAll('text.pie-slice').text(function(d) {
 						<!-- return d.data.key; -->
@@ -340,33 +343,33 @@
 						.attr("fill", "white")
 						.attr("font-size", "35px")
 						.attr("dy", "50")
-						.text(moment(new Date(selectDateStr)).format("YYYY-MM-DD"));		
+						.text(moment(new Date(selectDateStr)).format("YYYY-MM-DD"));
 					gauge1.select('g')
 						.append("line")
-						.attr("x1",0)  
-						.attr("y1",0)  
-						.attr("x2",today.x2)  
-						.attr("y2",today.y2)  
-						.attr("stroke","#17201a")  
-						.attr("stroke-width",5)  
+						.attr("x1",0)
+						.attr("y1",0)
+						.attr("x2",today.x2)
+						.attr("y2",today.y2)
+						.attr("stroke","#17201a")
+						.attr("stroke-width",5)
 						.attr("marker-end","url(#arrow)");
-				});		
+				});
 			gauge1.filter = function(){}; //Disable selection
 			gauge1.render();
 
 			gauge2
-				.colors(d3.scaleOrdinal().range(['#f7dc6f','#27ae60','#27ae60','#303030','#303030','#303030','#303030','#303030','#303030','#cb4335','#cb4335','#f7dc6f']))				
+				.colors(d3.scaleOrdinal().range(['#f7dc6f','#27ae60','#27ae60','#303030','#303030','#303030','#303030','#303030','#303030','#cb4335','#cb4335','#f7dc6f']))
 				.width(550).height(400)
 				.slicesCap(12)
 				.cx(275).cy(280)
 				.innerRadius(10)
 				.title(function(){})
 				.dimension(sliceDim)
-				.group(sliceDimGroup)			
+				.group(sliceDimGroup)
 				.on('pretransition', function(gauge2) {
 					gauge2.selectAll('text.pie-slice').text(function(d) {
 						<!-- return d.data.key; -->
-					})	
+					})
 					gauge2.select('g')
 						.append("text")
 						.attr("text-anchor", "middle")
@@ -383,20 +386,20 @@
 						.text(moment(new Date(prevDateStr)).format("YYYY-MM-DD"))
 					gauge2.select('g')
 						.append("line")
-						.attr("x1",0)  
-						.attr("y1",0)  
-						.attr("x2",yesterday.x2)  
-						.attr("y2",yesterday.y2)  
-						.attr("stroke","#17202a")  
-						.attr("stroke-width",5)  
+						.attr("x1",0)
+						.attr("y1",0)
+						.attr("x2",yesterday.x2)
+						.attr("y2",yesterday.y2)
+						.attr("stroke","#17202a")
+						.attr("stroke-width",5)
 						.attr("marker-end","url(#arrow)");
 					});
 			gauge2.filter = function(){}; //Disable selection
 			gauge2.render();
-			
+
 	};//End Draw charts
 });
-	
+
 </script>
 </body>
 </html>
