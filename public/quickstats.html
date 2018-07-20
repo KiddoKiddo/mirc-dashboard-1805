@@ -169,8 +169,13 @@
    //Draw charts
    const renderPlots = (data) => {
 		const dateDim = data.dimension(d => moment(d.date, "YYYY-MM-DD HH:mm:ss"));
-		const throughputGroup = dateDim.group().reduceSum(d => +d.throughput);
-		const ordersGroup = dateDim.group().reduceSum(d => +d.throughput);
+		const throughputGroup = dateDim.group().reduceSum((d) => {
+      if(d.date === currentStr) {
+        return Math.floor(Math.random() * +d.throughput);
+      }
+      return +d.throughput;
+    });
+		const ordersGroup = dateDim.group().reduceSum((d) => +d.throughput); // Change for orders to be throughput
 
 		//To fix the size of Pie Chart slices
 		const fakeData = [{"part_name":"slice1", "size":1},{"part_name":"slice2", "size":1},{"part_name":"slice3", "size":1},{"part_name":"slice4", "size":1},
@@ -300,9 +305,6 @@
 				if (moment(new Date(orderNum[n].key)).format('YYYY-MM-DD HH:mm:ss') == prevDateStr)
 					prevOrder = JSON.stringify(orderNum[n].value);
 			}
-      // Change as Humza's request
-      todayOutput = Math.floor(todayOrder * Math.random());
-      prevOutput = prevOrder;
 
 			const currentOrder = document.getElementById('order1');
 				currentOrder.innerHTML = todayOrder;
