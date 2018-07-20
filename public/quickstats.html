@@ -170,7 +170,7 @@
    const renderPlots = (data) => {
 		const dateDim = data.dimension(d => moment(d.date, "YYYY-MM-DD HH:mm:ss"));
 		const throughputGroup = dateDim.group().reduceSum(d => +d.throughput);
-		const ordersGroup = dateDim.group().reduceSum(d => +d.orders);
+		const ordersGroup = dateDim.group().reduceSum(d => +d.throughput);
 
 		//To fix the size of Pie Chart slices
 		const fakeData = [{"part_name":"slice1", "size":1},{"part_name":"slice2", "size":1},{"part_name":"slice3", "size":1},{"part_name":"slice4", "size":1},
