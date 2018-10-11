@@ -3,11 +3,10 @@
 <head>
     <title>Rejects By Unit</title>
     <meta charset="UTF-8">
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="../css/dc.css"/>
-	<link rel="stylesheet" type="text/css" href="https://unpkg.com/dc@3/dc.css" />
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
-  <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
+    <link rel="stylesheet" type="text/css" href="css/4.1.1/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/dc.css"/>
+    <link rel="stylesheet" type="text/css" href="css/all.css">
+    <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
 	<style>
 	.dc-chart g {
 		fill: white;
@@ -242,7 +241,7 @@ function remove_empty_bins(source_group) {
     .dimension(partTwoDimension)
 	.minAngleForLabel(10)
 	.slicesCap(6)
-  .externalLabels(2)
+  .externalLabels(1)
 	//.data(function (group) {  return group.top(5).filter(function(kv) { return kv.value > 0; }); })
 	.cx(300)
     .innerRadius(80)

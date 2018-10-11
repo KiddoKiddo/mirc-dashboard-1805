@@ -3,31 +3,30 @@
 <head>
     <title>Downtime</title>
     <meta charset="UTF-8">
-	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="../css/dc.css"/>
-	<link rel="stylesheet" type="text/css" href="https://unpkg.com/dc@3/dc.css" />
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+	<link rel="stylesheet" type="text/css" href="css/4.1.1/bootstrap.min.css"/>
+  <link rel="stylesheet" type="text/css" href="css/dc.css"/>
+  <link rel="stylesheet" type="text/css" href="css/all.css">
   <link rel="stylesheet" type="text/css" href="js/datefilter/datefilter.css"/>
 	<style>
 	.dc-chart g {
 		fill: white;
 		font-size: 25px;
 	}
-		
+
 	.dc-chart g.tick text {
 		fill: white;
 		font-size:15px;
 	}
-	
+
 	body{
-    position: fixed; 
+    position: fixed;
     width: 100%;
 	}
-	
+
 	.datefilter-months {
 		margin-top: 0px;
 	}
-	
+
 	.datefilter-menu {
     top: 10px;
 	}
@@ -40,7 +39,7 @@
       <h1 class="col-md-10" style="padding-top:10px;margin-left:1%;font-size:36px;font-family:'Open Sans', sans-serif;font-weight:bold">Downtime</h1>
 	  <button style="margin-left:6%;"class="datefilter-btn float-right col-md-1"></button>
 	 </div>
-	<hr style="border-color:white;margin:0000">   
+	<hr style="border-color:white;margin:0000">
 
 	<div class="row">
 			<div class="col-md-6 border-right">
@@ -55,14 +54,14 @@
 				</div>
 			</div>
 	</div>
-	
+
 	<hr style="border-color:white;height:10px;background-color:white">
-	
+
 	<div class="row">
 		<div class="col-md-6">
 			<div class="container" style="margin-top:2%;margin-bottom:5%">
-				<div id="unschdbar"></div>			
-			</div> 
+				<div id="unschdbar"></div>
+			</div>
 		</div>
 		<div class="col-md-6">
 		<div class="container" style="margin-top:2%;margin-bottom:5%">
@@ -119,20 +118,20 @@
       renderPlots(downtime);
     });
 
-	
+
 var downPie = dc.pieChart("#downpie");
 var unschdBarchart = dc.barChart("#unschdbar");
 var schdBarchart = dc.barChart("#schdbar");
 var dataTable = dc.dataTable("#downtable");
 
     const renderPlots = (ndx) => {
-	  
+
       Dimension  = ndx.dimension(function(d) {return d.machine_group;})
 	  filterDim = ndx.dimension(function(d) {return d.machine_group;})
 	  SumGroup = Dimension.group().reduceSum(function(d) {return d.scheduled_down_duration + d.unscheduled_down_duration;});
 	  UnscheduledGroup = filterDim.group().reduceSum(function(d) {return d.unscheduled_down_duration;});
-	  ScheduledGroup = filterDim.group().reduceSum(function(d) {return d.scheduled_down_duration;});	  
-  
+	  ScheduledGroup = filterDim.group().reduceSum(function(d) {return d.scheduled_down_duration;});
+
      groupedDimension = Dimension.group().reduce(
           function (p, v) {
               ++p.number;
@@ -153,7 +152,7 @@ var dataTable = dc.dataTable("#downtable");
       }),
       rank = function (p) { return "" };
 
-	  
+
   downPie
 	.colors(d3.scaleOrdinal().range(['#022F40','#0090C1','#45B1D5','#2D4656','#046E8F']))
     .width(850)
@@ -184,7 +183,7 @@ var dataTable = dc.dataTable("#downtable");
 		.attr("dy","30")
 		.text("(%)")
 	    });
-		
+
 	unschdBarchart
 		.colors(d3.scaleOrdinal().range(['#0090C1']))
 		.x(d3.scaleBand())
@@ -231,7 +230,7 @@ var dataTable = dc.dataTable("#downtable");
                       .attr('height', '600')<!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
 					  .attr('width','1100') <!--By default, Y axis label overlaps y-axis scale. This fixes the problem and allows additional space for eyegasm.
         });
-		
+
 	schdBarchart
 		.colors(d3.scaleOrdinal().range(['#0090C1']))
 		.x(d3.scaleBand())
@@ -300,8 +299,8 @@ var dataTable = dc.dataTable("#downtable");
     .sortBy(function (d) { return d.value.number })
 	.endSlice(5)
     .order(d3.descending)
-	
-dc.renderAll()		
+
+dc.renderAll()
 
 };
 });
